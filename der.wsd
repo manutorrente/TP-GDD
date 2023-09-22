@@ -71,29 +71,37 @@ se manejan en pesos.
 efectivo, crédito, débito, etc. Los medios de pago disponibles se encuentran
 previamente tipificados '/
 
+
+' Punto 2
 entity alquiler {
-    idAlquiler: Int
+    idAlquiler: Int PK
+    --
     anuncio: Anuncio FK
     inquilino: Inquilino FK
     fechaInicio: DateTime
     fechaFin: DateTime
-    duracion: Int
-    tipoPeriodo: TipoPeriodo FK
-    detalleImporteAlquiler: DetalleImporteAlquiler FK
-    deposito: Int
-    comision: Int
-    gastosAveriguaciones: Int
-    estado: Estado FK
+    duracion: Duracion FK
+    detalleImporte: DetalleImporte FK
+    deposito: Float
+    comision: Float
+    gastosAveriguaciones: Float
+    estadoAlquiler: Estado FK
 }
 
-entity detalleImporteAlquiler {
-    idDetalleImporteAlquiler: Int
+
+
+entity duracion {
+    idDuracion: Int PK
+    nombre: tipoPeriodo FK
+    cantidad: Int
+}
+
+entity detalleImporte {
+    idDetalleImporte: Int
     nroPeriodoInicio: Int
     nroPeriodoFin: Int
     precio: Int
 }
-
-
 
 entity pagoAlquiler {
     idPagoAlquiler: Int
@@ -120,7 +128,23 @@ entity medioPago {
     nombre: Varchar(255)
 }
 
+entity venta {
+    idVenta: Int
+    anuncio: Anuncio FK
+    comprador: Comprador FK
+    fechaDeVenta: DateTime
+    precioDeVenta: Int
+    monedaDelPrecioDeVenta: tipoDeMoneda FK
+    pago: PagoVenta FK
+    comisionInmobiliaria: Int
+}
 
+entity pagoVenta {
+    importe: detalleImporte FK
+    monedaDelPago: tipoDeMoneda FK
+    cotizacion: Float
+    medioDePago: medioPago FK
+}
 
 entity anuncio {
     nroAnuncio: Int PK
@@ -134,16 +158,14 @@ entity anuncio {
     estadoAnuncio: EstadoAnuncio FK
     fechaFinalizacion: DateTime
     costoPublicacion: Double
-    
 }
-
-
 
 entity tipoDemoneda {
     idMoneda: Int PK
     nombre: varchar(255)
 }
 
+/' PUNTO 1 '/
 entity inmueble {
     nroInmueble: Int PK
     tipoDeInmueble: TipoDeInmueble FK  
@@ -160,7 +182,7 @@ entity inmueble {
 }
 
 entity tipoDeInmueble {
-    idTipoDeInmueble: Int
+    idTipoDeInmueble: Int PK
     nombre: varchar(255)
 }
 
@@ -223,8 +245,8 @@ entity propietario {
 }
 
 entity caracteristica {
-    idCaracteristica
-    nombre
+    idCaracteristica PK
+    nombre Varchar(255)
 }
 
 
@@ -261,6 +283,11 @@ entity estado {
     nombre Varchar(255)
 }
 
+entity estadoAlquiler {
+    idEstadoAlquiler PK
+    --
+    nombre: Varchar(255)
+}
 
 ' Anuncio
 anuncio }|-|| agenteInmobiliario  
@@ -277,20 +304,21 @@ inmueble }|--o| disposicion
 inmueble }|-o| orientacion
 estado ||--o{ inmueble
 tipoDeInmueble ||-o{ inmueble
-
-inmuebleCaracteristica ||--o{ inmueble
-caracteristica }o--|| inmuebleCaracteristica
+inmuebleCaracteristica }|--o| inmueble
+caracteristica |o--|{ inmuebleCaracteristica
 
 
 direccion ||-o{ propietario
 
-
-alquiler --|{ detalleImporteAlquiler
+' Alquiler
+alquiler --|{ detalleImporte
 alquiler --|{ pagoAlquiler
 alquiler --|{ estadoAlquiler
-alquiler --|{ inquilino
-alquiler ||--|| inmueble
+alquiler }|--|| inquilino
+alquiler ||--|| anuncio
+alquiler ||--|{ duracion
 
+duracion }|--|| tipoPeriodo
 
 
 
