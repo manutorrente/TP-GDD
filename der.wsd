@@ -2,7 +2,7 @@
 
 ' Punto 2
 entity alquiler {
-    idAlquiler: Int PK
+    idAlquiler: numeric PK
     --
     anuncio: Anuncio FK
     inquilino: inquilino FK
@@ -19,47 +19,47 @@ entity alquiler {
 
 
 entity duracion {
-    idDuracion: Int PK
+    idDuracion: numeric PK
     --
     nombre: tipoPeriodo FK
-    cantidad: Int
+    cantidad: numeric
 }
 
 entity detalleImporte {
-    idDetalleImporte: Int
-    nroPeriodoInicio: Int
-    nroPeriodoFin: Int
-    precio: Int
+    idDetalleImporte: numeric
+    nroPeriodoInicio: numeric
+    nroPeriodoFin: numeric
+    precio: numeric
 }
 
 entity pagoAlquiler {
-    idPagoAlquiler: Int
+    idPagoAlquiler: numeric
     alquiler: Alquiler FK
     fechaPago: DateTime
-    nroPeriodoPago: Int
-    descripcionPeriodo: Varchar(255)
+    nroPeriodoPago: numeric
+    descripcionPeriodo: nvarchar(100)
     fechaInicioPeriodo: DateTime
     fechaFinPeriodo: DateTime
-    importe: Integer
+    importe: numericeger
     medioPago: MedioPago FK
 }
 
 
 
 entity medioPago {
-    idMedioPago: Int
-    nombre: Varchar(255)
+    idMedioPago: numeric
+    nombre: nvarchar(100)
 }
 
 entity venta {
-    idVenta: Int
+    idVenta: numeric
     anuncio: Anuncio FK
     comprador: comprador FK
     fechaDeVenta: DateTime
-    precioDeVenta: Int
+    precioDeVenta: numeric
     monedaDelPrecioDeVenta: tipoDeMoneda FK
     pago: pagoVenta FK
-    comisionInmobiliaria: Int
+    comisionInmobiliaria: numeric
 }
 
 entity pagoVenta {
@@ -70,15 +70,15 @@ entity pagoVenta {
 }
 
 entity sucursal {
-    codigoSucursal: Int PK
+    codigoSucursal: numeric PK
     --
     direccion: direccion FK
-    nombre: varchar(50)
-    telefono: varchar(50)
+    nombre: nvarchar(100)
+    telefono: nvarchar(100)
 }
 
 entity anuncio {
-    nroAnuncio: Int PK
+    nroAnuncio: numeric PK
     --
     fechaPublicacion: DateTime
     agenteInmobiliario: agenteInmobiliario FK
@@ -93,61 +93,61 @@ entity anuncio {
 }
 
 entity tipoDeMoneda {
-    idMoneda: Int PK
+    idMoneda: numeric PK
     --
-    nombre: varchar(255)
+    nombre: nvarchar(100)
 }
 
 /' PUNTO 1 '/
 entity inmueble {
-    nroInmueble: Int PK
+    nroInmueble: numeric PK
     --
     tipoDeInmueble: TipoDeInmueble FK  
-    descripcion: varchar(100)
+    descripcion: nvarchar(100)
     propietario: propietario FK
     direccion: Direccion FK
-    ambientes: Smallint
-    superficieTotal: Int
+    ambientes: Smallnumeric
+    superficieTotal: numeric
     disposicion: Disposicion FK
     orientacion: orientacion FK
     estado: estado FK
-    Antiguedad: Int
-    expensas: Int
+    Antiguedad: numeric
+    expensas: numeric
 }
 
 entity tipoDeInmueble {
-    idTipoDeInmueble: Int PK
+    idTipoDeInmueble: numeric PK
     --
-    nombre: varchar(255)
+    nombre: nvarchar(100)
 }
 
 
 entity direccion {
-    idDireccion: Int PK
+    idDireccion: numeric PK
     --
     barrio: Barrio FK
     localidad: Localidad FK 
     provincia: Provincia FK 
-    calle: Varchar(255)
-    altura: Int
+    calle: nvarchar(100)
+    altura: numeric
 }
 
 entity barrio {
-    idBarrio: Int PK
+    idBarrio: numeric PK
     --
-    nombre: Varchar(255)
+    nombre: nvarchar(100)
     localidad: Localidad FK
 }
 
 entity localidad {
-    idLocalidad: Int
-    nombre: Varchar(255)
+    idLocalidad: numeric
+    nombre: nvarchar(100)
     provincia: Provincia FK
 }
 
 entity provincia {
-    idProvincia: Int
-    nombre: Varchar(255)
+    idProvincia: numeric
+    nombre: nvarchar(100)
 }
 
 provincia ||-|{ localidad
@@ -158,39 +158,39 @@ direccion |o--|| localidad
 direccion |o--|| provincia
 
 entity tipoOperacion {
-    idTipoOperacion: Int PK
+    idTipoOperacion: numeric PK
     --
-    nombre: varchar(255)
+    nombre: nvarchar(100)
 }
 
 entity agenteInmobiliario {
-    idagente Int PK
+    idagente numeric PK
     --
     sucursal_id: Sucursal FK    
-    nombre: Varchar(255)
-    apellido: Varchar(255)
-    dni: Varchar(30)
-    mail: Varchar(255)
+    nombre: nvarchar(100)
+    apellido: nvarchar(100)
+    dni: nvarchar(100)
+    mail: nvarchar(255)
 
 }
 
 
 entity caracteristica {
     idCaracteristica PK
-    nombre Varchar(255)
+    nombre nvarchar(100)
 }
 
 
 entity tipoPeriodo {
-    idTipoPeriodo Int PK
+    idTipoPeriodo numeric PK
     --
-    nombre: Varchar(255)
+    nombre: nvarchar(100)
 }
 
 entity estadoAnuncio {
-    idEstado Int PK
+    idEstado numeric PK
     --
-    nombre: varchar(255) 
+    nombre: nvarchar(100) 
 }
 
 
@@ -198,12 +198,12 @@ entity estadoAnuncio {
 entity disposicion {
     idDisposicion PK
     --
-    nombre varchar(64)
+    nombre nvarchar(100)
 }
 
 entity orientacion {
     idOrientacion PK 
-    nombre Varchar(255)
+    nombre nvarchar(100)
 }
 
 entity inmuebleCaracteristica {
@@ -213,24 +213,24 @@ entity inmuebleCaracteristica {
 
 entity estado {
     idEstado PK
-    nombre Varchar(255)
+    nombre nvarchar(100)
 }
 
 entity estadoAlquiler {
     idEstadoAlquiler PK
     --
-    nombre: Varchar(255)
+    nombre: nvarchar(100)
 }
 
 entity persona {
     idpersona PK
-    nombre: Varchar(255)
-    apellido: Varchar(255)
-    dni: Varchar(30)
-    telefono: Varchar(30) 
-    mail: Varchar(255)
-    fechaRegistro: Date
-    fechaNacimiento: Date
+    nombre: nvarchar(100)
+    apellido: nvarchar(100)
+    dni: nvarchar(100)
+    telefono: nvarchar(100) 
+    mail: nvarchar(100)
+    fechaRegistro: datetime
+    fechaNacimiento: datetime
 }
 
 entity comprador{
