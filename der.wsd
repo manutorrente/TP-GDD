@@ -20,6 +20,7 @@ entity alquiler {
 
 entity duracion {
     idDuracion: Int PK
+    --
     nombre: tipoPeriodo FK
     cantidad: Int
 }
@@ -70,6 +71,7 @@ entity pagoVenta {
 
 entity sucursal {
     codigoSucursal: Int PK
+    --
     direccion: direccion FK
     nombre: varchar(50)
     telefono: varchar(50)
@@ -77,6 +79,7 @@ entity sucursal {
 
 entity anuncio {
     nroAnuncio: Int PK
+    --
     fechaPublicacion: DateTime
     agenteInmobiliario: agenteInmobiliario FK
     tipoOperacion: TipoOperacion FK
@@ -91,14 +94,16 @@ entity anuncio {
 
 entity tipoDeMoneda {
     idMoneda: Int PK
+    --
     nombre: varchar(255)
 }
 
 /' PUNTO 1 '/
 entity inmueble {
     nroInmueble: Int PK
+    --
     tipoDeInmueble: TipoDeInmueble FK  
-    descripcion: Text
+    descripcion: varchar(100)
     propietario: propietario FK
     direccion: Direccion FK
     ambientes: Smallint
@@ -112,6 +117,7 @@ entity inmueble {
 
 entity tipoDeInmueble {
     idTipoDeInmueble: Int PK
+    --
     nombre: varchar(255)
 }
 
@@ -119,18 +125,18 @@ entity tipoDeInmueble {
 entity direccion {
     idDireccion: Int PK
     --
-    barrio: Barrio FK 
-    localidad: Localidad FK
-    provincia: Provincia FK
+    barrio: Barrio FK
+    localidad: Localidad FK 
+    provincia: Provincia FK 
     calle: Varchar(255)
     altura: Int
 }
 
 entity barrio {
     idBarrio: Int PK
+    --
     nombre: Varchar(255)
     localidad: Localidad FK
-
 }
 
 entity localidad {
@@ -153,11 +159,13 @@ direccion |o--|| provincia
 
 entity tipoOperacion {
     idTipoOperacion: Int PK
+    --
     nombre: varchar(255)
 }
 
 entity agenteInmobiliario {
     idagente Int PK
+    --
     sucursal_id: Sucursal FK    
     nombre: Varchar(255)
     apellido: Varchar(255)
@@ -175,11 +183,13 @@ entity caracteristica {
 
 entity tipoPeriodo {
     idTipoPeriodo Int PK
+    --
     nombre: Varchar(255)
 }
 
 entity estadoAnuncio {
     idEstado Int PK
+    --
     nombre: varchar(255) 
 }
 
@@ -277,7 +287,7 @@ propietario }o--|| direccion
 detalleImporte }|--||alquiler 
 alquiler ||-|{ pagoAlquiler
 estadoAlquiler }|--|| alquiler
-alquiler ||--|| anuncio
+alquiler |o--|| anuncio
 alquiler ||--|{ duracion
 
 duracion }|--|| tipoPeriodo
@@ -288,7 +298,7 @@ pagoAlquiler }o-|| medioPago
 ' medioPago ||--o{ pagoAlquiler
 
 ' Venta
-venta ||--|| anuncio
+venta |o--|| anuncio
 venta }|--|| tipoDeMoneda
 venta ||--|{ pagoVenta
 pagoVenta ||--||detalleImporte
