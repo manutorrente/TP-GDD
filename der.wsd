@@ -1,93 +1,21 @@
 @startuml diagrama
 
-
-/' 
-
-
-alquiler
-detalle importe alquiler
-pago de alquiler
-venta
-pago '/
-
-/' 2. Gestión de Alquileres
-El sistema permite además que la inmobiliaria pueda gestionar los alquileres que se
-concretan y los que están en curso, junto con los pagos de los inquilinos. La sucursal del
-grupo inmobiliario solo gestiona los alquileres que se publican y concretan en su
-sucursal.
-Cada vez que se concreta un alquiler, se registra la siguiente información:
-● Código de Alquiler: identificador numérico único para cada alquiler.
-● Anuncio del cual deriva: Se considera que todos los alquileres se concretan a
-partir de anuncios. El agente que gestionará el alquiler es el mismo que gestionó
-el anuncio en la sucursal. La información del inmueble también se obtendrá a
-partir del anuncio.
-6
-● Inquilino: Se registra aquella persona que alquila el inmueble, con toda su
-información correspondiente.
-● Fecha de Inicio del alquiler: Fecha a partir de la cual el inquilino puede hacer
-uso del inmueble.
-● Fecha de fin del alquiler: Fecha en la cual se termina el alquiler.
-● Duración del alquiler: Se registra la cantidad de períodos por los cuales se
-alquila el inmueble. Por ejemplo, 36 (meses), 2 (semanas), 1 (quincena)
-El tipo de periodo al cual corresponde la duración (meses, semanas, quincena,
-etc) es el mismo que se especifica en el anuncio.
-● Detalle de Importe del alquiler: Dado que el importe del alquiler puede variar
-a lo largo del mismo, se registra el importe comprendido dentro de cada rango de
-periodos con la siguiente información:
-o Nro. De periodo de Inicio
-o Nro. De período de Fin
-o Precio
-Por ejemplo para un alquiler de 36 meses: del periodo 1(mes) al 12 (mes) el
-precio del alquiler es de X, del 13 al 24 de Y, y así sucesivamente.
-Esta información puede o no conocerse desde el inicio del alquiler, o se irá
-completando a medida que avance el mismo y se defina el precio.
-El precio inicial puede variar con respecto al precio del anuncio.
-● Depósito: Importe de dinero que deja el inquilino a la inmobiliaria en concepto
-de depósito.
-● Comisión: Importe de dinero que recibe la inmobiliaria, pagado por el
-propietario, por la transacción de alquiler en cuestión.
-● Gastos de Averiguaciones: Importe de dinero pagado por el inquilino por las
-averiguaciones que debe de hacer la inmobiliaria para el alquiler.
-● Estado: Estado en que se encuentra en alquiler: vigente, finalizado, cancelado,
-rescindido, etc.
-3. Gestión de Pago de Alquileres
-Para la gestión de los alquileres el sistema permite registrar los pagos de los inquilinos.
-Por cada pago que haga un inquilino se registra:
-● Código. De Pago: Cada pago está identificado por un número único.
-● Alquiler: Alquiler al cual corresponde el pago que se está realizando.
-● Fecha de Pago: Fecha en la cual se realiza el pago.
-7
-● Nro. De periodo de pago: A qué período corresponde el pago. Por ejemplo, el
-valor 1, en un alquiler de tipo de periodo mensual, corresponde al primer mes.
-● Descripción del periodo: Texto descriptivo del periodo. Por ejemplo: enero
-2023, primera quincena enero, etc.
-● Fecha de Inicio del período pagado: Fecha de inicio del período al cual
-corresponde el pago.
-● Fecha de fin del periodo pagado: Fecha de fin del período al cual corresponde
-el pago.
-● Importe: Importe pagado por el inquilino a la inmobiliaria. Todos los alquileres
-se manejan en pesos.
-● Medio de Pago: Medio de pago a través del cual se realizó el mismo, como ser:
-efectivo, crédito, débito, etc. Los medios de pago disponibles se encuentran
-previamente tipificados '/
-
-
 ' Punto 2
 entity alquiler {
     idAlquiler: Int PK
     --
     anuncio: Anuncio FK
-    inquilino: Inquilino FK
+    inquilino: inquilino FK
+    duracion: Duracion FK
     fechaInicio: DateTime
     fechaFin: DateTime
-    duracion: Duracion FK
     detalleImporte: DetalleImporte FK
     deposito: Float
     comision: Float
     gastosAveriguaciones: Float
     estadoAlquiler: Estado FK
+    pagoAlquiler: PagoAlquiler FK
 }
-
 
 
 entity duracion {
@@ -115,13 +43,7 @@ entity pagoAlquiler {
     medioPago: MedioPago FK
 }
 
-entity inquilino {
-    idInquilino: Int
-    nombre: Varchar(255)
-    apellido: Varchar(255)
-    dni: Int
-    mail: Varchar(255)
-}
+
 
 entity medioPago {
     idMedioPago: Int
@@ -131,11 +53,11 @@ entity medioPago {
 entity venta {
     idVenta: Int
     anuncio: Anuncio FK
-    comprador: Comprador FK
+    comprador: comprador FK
     fechaDeVenta: DateTime
     precioDeVenta: Int
     monedaDelPrecioDeVenta: tipoDeMoneda FK
-    pago: PagoVenta FK
+    pago: pagoVenta FK
     comisionInmobiliaria: Int
 }
 
@@ -146,10 +68,17 @@ entity pagoVenta {
     medioDePago: medioPago FK
 }
 
+entity sucursal {
+    codigoSucursal: Int PK
+    direccion: direccion FK
+    nombre: varchar(50)
+    telefono: varchar(50)
+}
+
 entity anuncio {
     nroAnuncio: Int PK
     fechaPublicacion: DateTime
-    agenteInmobiliario: AgenteInmobiliario FK
+    agenteInmobiliario: agenteInmobiliario FK
     tipoOperacion: TipoOperacion FK
     inmueble: Inmueble FK
     precioPublicado: Double 
@@ -160,7 +89,7 @@ entity anuncio {
     costoPublicacion: Double
 }
 
-entity tipoDemoneda {
+entity tipoDeMoneda {
     idMoneda: Int PK
     nombre: varchar(255)
 }
@@ -170,7 +99,7 @@ entity inmueble {
     nroInmueble: Int PK
     tipoDeInmueble: TipoDeInmueble FK  
     descripcion: Text
-    propietario: Propietario FK
+    propietario: propietario FK
     direccion: Direccion FK
     ambientes: Smallint
     superficieTotal: Int
@@ -228,21 +157,15 @@ entity tipoOperacion {
 }
 
 entity agenteInmobiliario {
-    idAgente Int PK
+    idagente Int PK
     sucursal_id: Sucursal FK    
     nombre: Varchar(255)
     apellido: Varchar(255)
-    dni: Int
+    dni: Varchar(30)
     mail: Varchar(255)
 
 }
 
-
-entity propietario {
-    idPropietario PK
-    nombre : Varchar(255)
-    direccion : FK
-}
 
 entity caracteristica {
     idCaracteristica PK
@@ -289,11 +212,52 @@ entity estadoAlquiler {
     nombre: Varchar(255)
 }
 
+entity persona {
+    idpersona PK
+    nombre: Varchar(255)
+    apellido: Varchar(255)
+    dni: Varchar(30)
+    telefono: Varchar(30) 
+    mail: Varchar(255)
+    fechaRegistro: Date
+    fechaNacimiento: Date
+}
+
+entity comprador{
+    idcomprador PK
+    --
+    persona: persona FK
+}
+
+entity inquilino{
+    idinquilino PK
+    --
+    persona: persona FK
+}
+
+
+entity propietario{
+    idpropietario PK
+    --
+    persona: persona FK
+}
+
+entity agente {
+    idagente PK
+    --
+    persona: persona FK
+}
+
+
+
+
+
+
 ' Anuncio
-anuncio }|-|| agenteInmobiliario  
+agenteInmobiliario }|--||anuncio
 anuncio }o--||  tipoOperacion 
 anuncio }o--|| inmueble
-anuncio }o--|| tipoDemoneda
+tipoDeMoneda ||--o{ anuncio 
 tipoPeriodo ||--o{ anuncio  
 estadoAnuncio ||--o{ anuncio
 
@@ -301,34 +265,52 @@ estadoAnuncio ||--o{ anuncio
 inmueble }|--|| propietario
 inmueble ||--o| direccion
 inmueble }|--o| disposicion
-inmueble }|-o| orientacion
+inmueble }|--o| orientacion
 estado ||--o{ inmueble
-tipoDeInmueble ||-o{ inmueble
+inmueble }o-|| tipoDeInmueble
 inmuebleCaracteristica }|--o| inmueble
 caracteristica |o--|{ inmuebleCaracteristica
 
-
-direccion ||-o{ propietario
+propietario }o--|| direccion
 
 ' Alquiler
-alquiler --|{ detalleImporte
-alquiler --|{ pagoAlquiler
-alquiler --|{ estadoAlquiler
-alquiler }|--|| inquilino
+detalleImporte }|--||alquiler 
+alquiler ||-|{ pagoAlquiler
+estadoAlquiler }|--|| alquiler
 alquiler ||--|| anuncio
 alquiler ||--|{ duracion
 
 duracion }|--|| tipoPeriodo
 
 
+' Pagos
+pagoAlquiler }o-|| medioPago
+' medioPago ||--o{ pagoAlquiler
+
+' Venta
+venta ||--|| anuncio
+venta }|--|| tipoDeMoneda
+venta ||--|{ pagoVenta
+pagoVenta ||--||detalleImporte
+pagoVenta }o-|| medioPago
+
+pagoVenta }o----|| tipoDeMoneda
+
+alquiler ||--|{ inquilino
+comprador ||--|{ venta
+agente ||--|{ anuncio
+
+
+' personas
+propietario }|--|| persona
+agente }|--|| persona
+inquilino }|--|| persona
+comprador }|--|| persona
+
+ agente ||--|{ sucursal
 
 @enduml
-
-
-
-
-
-
+                                        
 
 
 
