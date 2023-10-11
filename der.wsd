@@ -10,13 +10,12 @@ entity alquiler {
     fechaInicio: DateTime
     fechaFin: DateTime
     detalleImporte: DetalleImporte FK
-    deposito: Float
-    comision: Float
-    gastosAveriguaciones: Float
+    deposito: numeric (18, 2)
+    comision: numeric (18, 2)
+    gastosAveriguaciones: numeric (18, 2)
     estadoAlquiler: Estado FK
     pagoAlquiler: PagoAlquiler FK
 }
-
 
 entity duracion {
     idDuracion: numeric PK
@@ -44,8 +43,6 @@ entity pagoAlquiler {
     medioPago: MedioPago FK
 }
 
-
-
 entity medioPago {
     idMedioPago: numeric
     nombre: nvarchar(100)
@@ -63,9 +60,11 @@ entity venta {
 }
 
 entity pagoVenta {
-    importe: detalleImporte FK
+    idPagoVenta: Int PK
+    --
+    importe: numeric (18, 2)
     monedaDelPago: tipoDeMoneda FK
-    cotizacion: Float
+    cotizacion: numeric (18, 2)
     medioDePago: medioPago FK
 }
 
@@ -81,8 +80,8 @@ entity anuncio {
     nroAnuncio: numeric PK
     --
     fechaPublicacion: DateTime
-    agenteInmobiliario: agenteInmobiliario FK
     tipoOperacion: TipoOperacion FK
+    agente: Agente FK
     inmueble: Inmueble FK
     precioPublicado: Double 
     moneda: tipoDeMoneda FK
@@ -104,7 +103,6 @@ entity inmueble {
     --
     tipoDeInmueble: TipoDeInmueble FK  
     descripcion: nvarchar(100)
-    propietario: propietario FK
     direccion: Direccion FK
     ambientes: Smallnumeric
     superficieTotal: numeric
@@ -115,19 +113,23 @@ entity inmueble {
     expensas: numeric
 }
 
+entity propietarioDeInmueble {
+    idPropietarioDeInmueble: numeric PK
+    --
+    propietario: propietario FK
+    inmueble: inmueble FK
+}
+
 entity tipoDeInmueble {
     idTipoDeInmueble: numeric PK
     --
     nombre: nvarchar(100)
 }
 
-
 entity direccion {
     idDireccion: numeric PK
     --
     barrio: Barrio FK
-    localidad: Localidad FK 
-    provincia: Provincia FK 
     calle: nvarchar(100)
     altura: numeric
 }
@@ -150,28 +152,15 @@ entity provincia {
     nombre: nvarchar(100)
 }
 
-provincia ||-|{ localidad
-localidad ||-|{ barrio
-
 direccion |o--|| barrio
-direccion |o--|| localidad
-direccion |o--|| provincia
+barrio }|--|| localidad
+localidad }|--|| provincia
+
 
 entity tipoOperacion {
     idTipoOperacion: numeric PK
     --
     nombre: nvarchar(100)
-}
-
-entity agenteInmobiliario {
-    idagente numeric PK
-    --
-    sucursal_id: Sucursal FK    
-    nombre: nvarchar(100)
-    apellido: nvarchar(100)
-    dni: nvarchar(100)
-    mail: nvarchar(255)
-
 }
 
 
@@ -192,8 +181,6 @@ entity estadoAnuncio {
     --
     nombre: nvarchar(100) 
 }
-
-
 
 entity disposicion {
     idDisposicion PK
@@ -245,7 +232,6 @@ entity inquilino{
     persona: persona FK
 }
 
-
 entity propietario{
     idpropietario PK
     --
@@ -255,16 +241,11 @@ entity propietario{
 entity agente {
     idagente PK
     --
+    sucursal: sucursal FK
     persona: persona FK
 }
 
-
-
-
-
-
 ' Anuncio
-agenteInmobiliario }|--||anuncio
 anuncio }o--||  tipoOperacion 
 anuncio }o--|| inmueble
 tipoDeMoneda ||--o{ anuncio 
@@ -272,7 +253,8 @@ tipoPeriodo ||--o{ anuncio
 estadoAnuncio ||--o{ anuncio
 
 ' Inmbueble
-inmueble }|--|| propietario
+inmueble ||--|{ propietarioDeInmueble
+propietarioDeInmueble }o--|| propietario
 inmueble ||--o| direccion
 inmueble }|--o| disposicion
 inmueble }|--o| orientacion
@@ -281,7 +263,7 @@ inmueble }o-|| tipoDeInmueble
 inmuebleCaracteristica }|--o| inmueble
 caracteristica |o--|{ inmuebleCaracteristica
 
-propietario }o--|| direccion
+
 
 ' Alquiler
 detalleImporte }|--||alquiler 
@@ -301,7 +283,6 @@ pagoAlquiler }o-|| medioPago
 venta |o--|| anuncio
 venta }|--|| tipoDeMoneda
 venta ||--|{ pagoVenta
-pagoVenta ||--||detalleImporte
 pagoVenta }o-|| medioPago
 
 pagoVenta }o----|| tipoDeMoneda
@@ -317,30 +298,9 @@ agente }|--|| persona
 inquilino }|--|| persona
 comprador }|--|| persona
 
- agente ||--|{ sucursal
+agente ||--|{ sucursal
+sucursal }o--|| direccion
 
 @enduml
                                         
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
