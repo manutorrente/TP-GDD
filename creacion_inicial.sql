@@ -1,4 +1,3 @@
--- Use the created database
 USE GD2C2023;
 GO
 
@@ -81,7 +80,6 @@ CREATE TABLE Persona (
     fecha_nacimiento DATETIME
 );
 
-
 CREATE TABLE Propietario (
     id_propietario INT PRIMARY KEY,
     persona_id INT,
@@ -141,7 +139,6 @@ CREATE TABLE Comprador (
 CREATE TABLE TipoOperacion (
     id_tipo_operacion INT PRIMARY KEY,
     nombre NVARCHAR(100),
-
 );
 
 CREATE TABLE TipoDeMoneda (
@@ -240,7 +237,6 @@ CREATE TABLE PagoVenta (
     FOREIGN KEY (moneda_del_pago_id) REFERENCES TipoDeMoneda(id_moneda),
     FOREIGN KEY (medio_de_pago_id) REFERENCES MedioPago(id_medio_pago)
 );
-
 
 CREATE TABLE Venta (
     id_venta INT PRIMARY KEY,
