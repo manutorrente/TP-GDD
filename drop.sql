@@ -123,5 +123,7 @@ IF EXISTS (SELECT * FROM sys.procedures WHERE name = 'migrar_anuncio')
 BEGIN
     DROP PROCEDURE migrar_anuncio;
 END;
--- Drop the database if needed
--- DROP DATABASE YourDatabaseName;
+
+
+DROP PROCEDURE MigratePersonData;
+DROP PROCEDURE migrar_personas;

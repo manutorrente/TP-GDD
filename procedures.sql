@@ -69,96 +69,55 @@ GO
 
 
 
-CREATE PROCEDURE migrar_inquilinos 
+CREATE PROCEDURE MigratePersonData
+    @TableName NVARCHAR(100),
+    @SourceColumnPrefix NVARCHAR(100)
 AS
 BEGIN
     -- Create a temporary table to hold the result
-    CREATE TABLE #TempInquilino (id_persona INT);
+    CREATE TABLE #TempData (id_persona INT);
 
     -- Insert data into the Persona table and capture the id_persona
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
-    OUTPUT inserted.id_persona INTO #TempInquilino (id_persona)
-    SELECT DISTINCT INQUILINO_NOMBRE, INQUILINO_APELLIDO, INQUILINO_DNI, INQUILINO_FECHA_REGISTRO, INQUILINO_TELEFONO, INQUILINO_MAIL, INQUILINO_FECHA_NAC
+    OUTPUT inserted.id_persona INTO #TempData (id_persona)
+    SELECT DISTINCT
+        CONCAT(@SourceColumnPrefix, '_NOMBRE') AS Nombre,
+        CONCAT(@SourceColumnPrefix, '_APELLIDO') AS Apellido,
+        CONCAT(@SourceColumnPrefix, '_DNI') AS Dni,
+        CONCAT(@SourceColumnPrefix, '_FECHA_REGISTRO') AS FechaRegistro,
+        CONCAT(@SourceColumnPrefix, '_TELEFONO') AS Telefono,
+        CONCAT(@SourceColumnPrefix, '_MAIL') AS Mail,
+        CONCAT(@SourceColumnPrefix, '_FECHA_NAC') AS FechaNacimiento
     FROM gd_esquema.Maestra;
 
-    -- Now insert data into the Inquilino table from the temporary table
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Inquilino (persona_id)
-    SELECT id_persona FROM #TempInquilino;
+    -- Now insert data into the specified table from the temporary table
+    DECLARE @InsertStatement NVARCHAR(MAX);
+    SET @InsertStatement = N'
+        INSERT INTO ' + @TableName + ' (persona_id)
+        SELECT id_persona FROM #TempData;
+    ';
+
+    EXEC sp_executesql @InsertStatement;
 
     -- Clean up the temporary table
-    DROP TABLE #TempInquilino;
+    DROP TABLE #TempData;
 END
 GO
 
-EXEC migrar_inquilinos
-
-SELECT * FROM ANDY_Y_SUS_SEMINARAS.Inquilino
-
-DROP PROCEDURE migrar_inquilinos
-GO
-
-CREATE PROCEDURE migrar_agentes
+CREATE PROCEDURE migrar_personas
 AS
 BEGIN
-    -- Create a temporary table to hold the result
-    CREATE TABLE #TempAgente (id_persona INT);
 
-    -- Insert data into the Persona table and capture the id_persona
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
-    OUTPUT inserted.id_persona INTO #TempAgente (id_persona)
-    SELECT DISTINCT AGENTE_NOMBRE, AGENTE_APELLIDO, AGENTE_DNI, AGENTE_FECHA_REGISTRO, AGENTE_TELEFONO, AGENTE_MAIL, AGENTE_FECHA_NAC
-    FROM gd_esquema.Maestra;
+    EXEC MigratePersonData 'ANDY_Y_SUS_SEMINARAS.Inquilino', 'INQUILINO'
+    EXEC MigratePersonData 'ANDY_Y_SUS_SEMINARAS.Agente', 'AGENTE'
+    EXEC MigratePersonData 'ANDY_Y_SUS_SEMINARAS.Propietario', 'PROPIETARIO'
+    EXEC MigratePersonData 'ANDY_Y_SUS_SEMINARAS.Comprador', 'COMPRADOR'
 
-    -- Now insert data into the Agente table from the temporary table
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Agente (persona_id)
-    SELECT id_persona FROM #TempAgente;
-
-    -- Clean up the temporary table
-    DROP TABLE #TempAgente;
 END
 GO
 
-CREATE PROCEDURE migrar_propietarios
-AS
-BEGIN
-    -- Create a temporary table to hold the result
-    CREATE TABLE #TempPropietario (id_persona INT);
-
-    -- Insert data into the Persona table and capture the id_persona
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
-    OUTPUT inserted.id_persona INTO #TempPropietario (id_persona)
-    SELECT DISTINCT PROPIETARIO_NOMBRE, PROPIETARIO_APELLIDO, PROPIETARIO_DNI, PROPIETARIO_FECHA_REGISTRO, PROPIETARIO_TELEFONO, PROPIETARIO_MAIL, PROPIETARIO_FECHA_NAC
-    FROM gd_esquema.Maestra;
-
-    -- Now insert data into the Propietario table from the temporary table
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Propietario (persona_id)
-    SELECT id_persona FROM #TempPropietario;
-
-    -- Clean up the temporary table
-    DROP TABLE #TempPropietario;
-END
-GO
-
-CREATE PROCEDURE migrar_compradores
-AS
-BEGIN
-    -- Create a temporary table to hold the result
-    CREATE TABLE #TempComprador (id_persona INT);
-
-    -- Insert data into the Persona table and capture the id_persona
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
-    OUTPUT inserted.id_persona INTO #TempComprador (id_persona)
-    SELECT DISTINCT COMPRADOR_NOMBRE, COMPRADOR_APELLIDO, COMPRADOR_DNI, COMPRADOR_FECHA_REGISTRO, COMPRADOR_TELEFONO, COMPRADOR_MAIL, COMPRADOR_FECHA_NAC
-    FROM gd_esquema.Maestra;
-
-    -- Now insert data into the Comprador table from the temporary table
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Comprador (persona_id)
-    SELECT id_persona FROM #TempComprador;
-
-    -- Clean up the temporary table
-    DROP TABLE #TempComprador;
-END
-GO 
+EXEC migrar_personas
+go
 
 CREATE PROCEDURE migrar_provincias
 AS
