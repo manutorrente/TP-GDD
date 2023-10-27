@@ -131,7 +131,6 @@ entity direccion {
     --
     barrio: Barrio FK
     calle: nvarchar(100)
-    altura: numeric
 }
 
 entity barrio {

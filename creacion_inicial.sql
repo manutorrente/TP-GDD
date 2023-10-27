@@ -31,8 +31,7 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Direccion
 (
     id_direccion INT PRIMARY KEY IDENTITY(1,1),
     barrio_id INT,
-    calle NVARCHAR(100),
-    altura INT,
+    calle NVARCHAR(100)
     FOREIGN KEY (barrio_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Barrio(id_barrio)
 );
 
