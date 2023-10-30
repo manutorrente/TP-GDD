@@ -19,7 +19,7 @@ entity alquiler {
 entity duracion {
     idDuracion: numeric PK
     --
-    nombre: tipoPeriodo FK
+    id_tipo_periodo: tipoPeriodo FK
     cantidad: numeric
 }
 

@@ -78,7 +78,6 @@ GO
 
 EXEC migrar_inquilinos
 
-SELECT * FROM ANDY_Y_SUS_SEMINARAS.Inquilino
 
 DROP PROCEDURE migrar_inquilinos
 GO
@@ -401,6 +400,15 @@ GO
 CREATE PROCEDURE migrar_pago_venta
 AS
 BEGIN
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.PagoVenta (importe, cotizacion, medio_de_pago_id, moneda_del_pago_id)
+    SELECT DISTINCT
+        PAGO_VENTA_IMPORTE,
+        PAGO_VENTA_COTIZACION,
+        mp.id_medio_pago,
+        tm.id_moneda
+    FROM gd_esquema.Maestra m
+    JOIN ANDY_Y_SUS_SEMINARAS.MedioPago mp ON m.PAGO_VENTA_MEDIO_PAGO = mp.nombre
+    JOIN ANDY_Y_SUS_SEMINARAS.TipoDeMoneda tm ON m.PAGO_VENTA_MONEDA = tm.nombre
 
 END
 GO
@@ -445,12 +453,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE migrar_pago_venta
-AS
-BEGIN
-    
-END
-GO
+
 
 
 

@@ -125,5 +125,4 @@ BEGIN
 END;
 
 
-DROP PROCEDURE MigratePersonData;
-DROP PROCEDURE migrar_personas;
+

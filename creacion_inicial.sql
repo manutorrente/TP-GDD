@@ -31,7 +31,7 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Direccion
 (
     id_direccion INT PRIMARY KEY IDENTITY(1,1),
     barrio_id INT,
-    calle NVARCHAR(100)
+    calle NVARCHAR(100),
     FOREIGN KEY (barrio_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Barrio(id_barrio)
 );
 
@@ -207,9 +207,9 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Anuncio
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Duracion
 (
     id_duracion INT PRIMARY KEY IDENTITY(1,1),
-    nombre INT,
+    tipo_periodo_id INT,
     cantidad NUMERIC,
-    FOREIGN KEY (nombre) REFERENCES ANDY_Y_SUS_SEMINARAS.TipoPeriodo(id_tipo_periodo)
+    FOREIGN KEY (tipo_periodo_id) REFERENCES ANDY_Y_SUS_SEMINARAS.TipoPeriodo(id_tipo_periodo)
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.DetalleImporte
