@@ -275,30 +275,6 @@ BEGIN
 END
 GO
 
--- CREATE PROCEDURE migrarDetalleImporte
-
-CREATE FUNCTION GetPersonaID -- ANTES TOMABA TODOS LOS ATRIBUTOS DE LA PERSONA PERO LAS QUERYS IBA MUY LENTAS 
-(
-
-    @dni NVARCHAR(100),
-    @mail NVARCHAR(100)
-
-)
-RETURNS INT
-AS
-BEGIN
-    DECLARE @id_persona INT;
-
-    SELECT @id_persona = id_persona
-    FROM ANDY_Y_SUS_SEMINARAS.Persona
-    WHERE
-        dni = @dni
-        AND mail = @mail
-
-    RETURN @id_persona;
-END
-GO
-
 CREATE PROCEDURE migrar_anuncio
 AS
 BEGIN
@@ -311,16 +287,17 @@ BEGIN
         i.nro_inmueble,
         ANUNCIO_PRECIO_PUBLICADO,
         m.id_moneda,
-        p.id_tipo_periodo,
+        tp.id_tipo_periodo,
         e.id_estado,
         ANUNCIO_FECHA_FINALIZACION,
         ANUNCIO_COSTO_ANUNCIO
     FROM gd_esquema.Maestra em
     JOIN ANDY_Y_SUS_SEMINARAS.TipoOperacion t ON em.ANUNCIO_TIPO_OPERACION = t.nombre
-    JOIN ANDY_Y_SUS_SEMINARAS.Agente a ON dbo.GetPersonaID(em.AGENTE_DNI, em.AGENTE_MAIL) = a.persona_id
+    JOIN ANDY_Y_SUS_SEMINARAS.Persona p ON em.AGENTE_DNI = p.dni AND em.AGENTE_MAIL = p.mail
+    JOIN ANDY_Y_SUS_SEMINARAS.Agente a ON a.persona_id = p.id_persona
     JOIN ANDY_Y_SUS_SEMINARAS.Inmueble i ON em.INMUEBLE_CODIGO = i.nro_inmueble 
     JOIN ANDY_Y_SUS_SEMINARAS.TipoDeMoneda m ON em.ANUNCIO_MONEDA = m.nombre
-    JOIN ANDY_Y_SUS_SEMINARAS.TipoPeriodo p ON em.ANUNCIO_TIPO_PERIODO = p.nombre
+    JOIN ANDY_Y_SUS_SEMINARAS.TipoPeriodo tp ON em.ANUNCIO_TIPO_PERIODO = tp.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.EstadoAnuncio e ON em.ANUNCIO_ESTADO = e.nombre
 END
 GO
@@ -330,70 +307,14 @@ AS
 BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.PropietarioDeInmueble (propietario_id, inmueble_id)
     SELECT DISTINCT
-        p.id_propietario,
+        pr.id_propietario,
         i.nro_inmueble
     FROM gd_esquema.Maestra m
-    JOIN ANDY_Y_SUS_SEMINARAS.Propietario p ON dbo.GetPersonaID(m.PROPIETARIO_DNI, m.PROPIETARIO_MAIL) = p.persona_id
-    JOIN ANDY_Y_SUS_SEMINARAS.Inmueble i ON m.INMUEBLE_CODIGO = i.nro_inmueble 
+    JOIN ANDY_Y_SUS_SEMINARAS.Persona p ON m.PROPIETARIO_DNI = p.dni AND m.PROPIETARIO_MAIL = p.mail
+    JOIN ANDY_Y_SUS_SEMINARAS.Propietario pr ON pr.persona_id = p.id_persona
+    JOIN ANDY_Y_SUS_SEMINARAS.Inmueble i ON m.INMUEBLE_CODIGO = i.nro_inmueble
 END
 GO
-
-CREATE PROCEDURE migrar_pago_alquiler
-AS
-BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.PagoAlquiler (alquiler_id, fecha_pago, nro_periodo_pago, fecha_inicio_periodo, fecha_fin_periodo, importe, medioPago_id, descripcion_periodo)
-    SELECT DISTINCT
-        a.id_alquiler,
-        PAGO_ALQUILER_FECHA,
-        PAGO_ALQUILER_NRO_PERIODO,
-        PAGO_ALQUILER_FEC_INI,
-        PAGO_ALQUILER_FEC_FIN,
-        PAGO_ALQUILER_IMPORTE,
-        mp.id_medio_pago,
-        PAGO_ALQUILER_DESC
-    FROM gd_esquema.Maestra m
-    JOIN ANDY_Y_SUS_SEMINARAS.Alquiler a ON m.ALQUILER_CODIGO = a.id_alquiler
-    JOIN ANDY_Y_SUS_SEMINARAS.MedioPago mp ON m.PAGO_ALQUILER_MEDIO_PAGO = mp.nombre
-END
-GO
-
-
-CREATE PROCEDURE migrar_venta
-AS
-BEGIN   
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Venta (anuncio_id, comprador_id, fecha_venta, precio_venta, moneda_id, pago_venta_id, comision)
-    SELECT DISTINCT
-        v.nro_anuncio,
-        c.id_comprador,
-        VENTA_FECHA,
-        VENTA_PRECIO_VENTA,
-        tm.id_moneda,
-        p.id_pago_venta,
-        VENTA_COMISION
-    FROM gd_esquema.Maestra m
-    JOIN ANDY_Y_SUS_SEMINARAS.Anuncio v ON m.ANUNCIO_CODIGO = v.nro_anuncio
-    JOIN ANDY_Y_SUS_SEMINARAS.Comprador c ON dbo.GetPersonaID(m.COMPRADOR_DNI, m.COMPRADOR_MAIL) = c.persona_id
-    JOIN ANDY_Y_SUS_SEMINARAS.TipoDeMoneda tm ON m.PAGO_VENTA_MONEDA = tm.nombre
-    JOIN ANDY_Y_SUS_SEMINARAS.PagoVenta p ON m.PAGO_VENTA_IMPORTE = p.importe AND m.PAGO_VENTA_COTIZACION = p.cotizacion AND m.PAGO_VENTA_MEDIO_PAGO = p.medio_de_pago_id AND m.PAGO_VENTA_MONEDA = p.moneda_del_pago_id  
-END
-GO
-
-CREATE PROCEDURE migrar_pago_venta
-AS
-BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.PagoVenta (importe, cotizacion, medio_de_pago_id, moneda_del_pago_id)
-    SELECT DISTINCT
-        PAGO_VENTA_IMPORTE,
-        PAGO_VENTA_COTIZACION,
-        mp.id_medio_pago,
-        tm.id_moneda
-    FROM gd_esquema.Maestra m
-    JOIN ANDY_Y_SUS_SEMINARAS.MedioPago mp ON m.PAGO_VENTA_MEDIO_PAGO = mp.nombre
-    JOIN ANDY_Y_SUS_SEMINARAS.TipoDeMoneda tm ON m.PAGO_VENTA_MONEDA = tm.nombre
-
-END
-GO
-
 
 CREATE PROCEDURE migrar_detalle_importe
 AS
@@ -407,10 +328,10 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE migrar_alquiler 
+CREATE PROCEDURE migrar_alquiler
 AS
 BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Alquiler (id_alquiler, fecha_inicio, fecha_fin, inquilino_id, estado_alquiler_id, detalle_importe_id, duracion_id, deposito, comision, gastos_averiguaciones, anuncio_id)
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Alquiler (codigo_alquiler, fecha_inicio, fecha_fin, inquilino_id, estado_alquiler_id, detalle_importe_id, duracion_id, deposito, comision, gastos_averiguaciones, anuncio_id)
     SELECT DISTINCT
         em.ALQUILER_CODIGO,
         em.ALQUILER_FECHA_INICIO,
@@ -430,49 +351,103 @@ BEGIN
     JOIN ANDY_Y_SUS_SEMINARAS.EstadoAlquiler e ON em.ALQUILER_ESTADO = e.nombre
     LEFT JOIN ANDY_Y_SUS_SEMINARAS.DetalleImporte d ON em.DETALLE_ALQ_NRO_PERIODO_INI = d.nro_periodo_inicio AND em.DETALLE_ALQ_NRO_PERIODO_FIN = d.nro_periodo_fin AND em.DETALLE_ALQ_PRECIO = d.precio
     JOIN ANDY_Y_SUS_SEMINARAS.Anuncio a ON em.ANUNCIO_CODIGO = a.nro_anuncio
-    WHERE NOT EXISTS (
-        SELECT 1
-        FROM ANDY_Y_SUS_SEMINARAS.Alquiler alq
-        WHERE alq.ALQUILER_CODIGO = em.ALQUILER_CODIGO
-    )
 END
 GO
+CREATE PROCEDURE migrar_pago_alquiler
+AS
+BEGIN
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.PagoAlquiler (id_pago_alquiler, alquiler_id, fecha_pago, nro_periodo_pago, descripcion_periodo, fecha_inicio_periodo, fecha_fin_periodo, importe, medioPago_id)
+    SELECT DISTINCT
+        PAGO_ALQUILER_CODIGO,
+        a.id_alquiler,
+        PAGO_ALQUILER_FECHA,
+        PAGO_ALQUILER_NRO_PERIODO,
+        PAGO_ALQUILER_DESC,
+        PAGO_ALQUILER_FEC_INI,
+        PAGO_ALQUILER_FEC_FIN,
+        PAGO_ALQUILER_IMPORTE,
+        mp.id_medio_pago
+    FROM gd_esquema.Maestra m
+    JOIN ANDY_Y_SUS_SEMINARAS.Alquiler a ON m.ALQUILER_CODIGO = a.codigo_alquiler 
+	JOIN ANDY_Y_SUS_SEMINARAS.DetalleImporte di ON a.detalle_importe_id = di.id_detalle_importe
+    JOIN ANDY_Y_SUS_SEMINARAS.MedioPago mp ON m.PAGO_ALQUILER_MEDIO_PAGO = mp.nombre 
+	WHERE PAGO_ALQUILER_NRO_PERIODO BETWEEN di.nro_periodo_inicio AND di.nro_periodo_fin
+END
+GO
+
+
+CREATE PROCEDURE migrar_pago_venta
+AS
+BEGIN
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.PagoVenta (importe, cotizacion, medio_de_pago_id, moneda_del_pago_id)
+    SELECT DISTINCT
+        PAGO_VENTA_IMPORTE,
+        PAGO_VENTA_COTIZACION,
+        mp.id_medio_pago,
+        tm.id_moneda
+    FROM gd_esquema.Maestra m
+    JOIN ANDY_Y_SUS_SEMINARAS.MedioPago mp ON m.PAGO_VENTA_MEDIO_PAGO = mp.nombre
+    JOIN ANDY_Y_SUS_SEMINARAS.TipoDeMoneda tm ON m.PAGO_VENTA_MONEDA = tm.nombre
+
+END
+GO
+
+
+CREATE PROCEDURE migrar_venta
+AS
+BEGIN
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Venta (id_venta, anuncio_id, comprador_id, fecha_venta, precio_venta, moneda_id, pago_venta_id, comision)
+    
+	SELECT DISTINCT
+		VENTA_CODIGO,
+        v.nro_anuncio,
+        c.id_comprador,
+        VENTA_FECHA,
+        VENTA_PRECIO_VENTA,
+        tm.id_moneda,
+        pv.id_pago_venta,
+        VENTA_COMISION
+    FROM gd_esquema.Maestra m
+    JOIN ANDY_Y_SUS_SEMINARAS.Anuncio v ON m.ANUNCIO_CODIGO = v.nro_anuncio
+    JOIN ANDY_Y_SUS_SEMINARAS.Persona p ON m.COMPRADOR_DNI = p.dni AND m.COMPRADOR_MAIL = p.mail
+    JOIN ANDY_Y_SUS_SEMINARAS.Comprador c ON c.persona_id = p.id_persona
+    JOIN ANDY_Y_SUS_SEMINARAS.TipoDeMoneda tm ON m.VENTA_MONEDA = tm.nombre
+	JOIN ANDY_Y_SUS_SEMINARAS.MedioPago mp on PAGO_VENTA_MEDIO_PAGO = mp.nombre
+    JOIN ANDY_Y_SUS_SEMINARAS.PagoVenta pv ON m.PAGO_VENTA_IMPORTE = pv.importe 
+	AND m.PAGO_VENTA_COTIZACION = pv.cotizacion 
+	AND mp.id_medio_pago = pv.medio_de_pago_id 
+	AND tm.id_moneda = pv.moneda_del_pago_id 
+END
+GO
+
+
+
 
 EXEC migrar_provincias;
 EXEC migrar_localidad;
 EXEC migrar_barrios;
 EXEC migrar_direccion;
 
--- Primero, migra los datos de tipificados
 EXEC migrar_tipificados;
 
--- A continuación, migrar las tablas de características
 EXEC migrar_carateristica;
 
--- Migrar los datos de personas
 EXEC migrar_inquilinos;
 EXEC migrar_agentes;
 EXEC migrar_propietarios;
 EXEC migrar_compradores;
 
--- Migrar localidades, provincias, barrios, direcciones e inmuebles
 EXEC migrar_inmueble;
 
--- Migrar sucursales, anuncios y detalles de importe
 EXEC migrar_sucursal;
 EXEC migrar_anuncio;
 EXEC migrar_detalle_importe;
 
--- Migrar propietarios de inmuebles, duraciones y pagos
 EXEC migrar_propietario_inmueble;
 EXEC migrar_alquiler;
 EXEC migrar_pago_alquiler;
 
--- Migrar venta, pago de venta y alquiler
-EXEC migrar_venta;
 EXEC migrar_pago_venta;
+EXEC migrar_venta;
 
 
-
-
-DROP FUNCTION dbo.GetPersonaID

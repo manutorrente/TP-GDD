@@ -47,19 +47,15 @@ DROP PROCEDURE migrar_barrios;
 DROP PROCEDURE migrar_direccion;
 DROP PROCEDURE migrar_inmueble;
 DROP PROCEDURE migrar_sucursal;
-DROP PROCEDURE GetPersonaID;
 DROP PROCEDURE migrar_anuncio;
 DROP PROCEDURE migrar_propietario_inmueble;
 DROP PROCEDURE migrar_tipo_periodo;
-DROP PROCEDURE migrar_pago_alquiler;
 DROP PROCEDURE migrar_duracion;
-DROP PROCEDURE migrar_venta;
 DROP PROCEDURE migrar_pago_venta;
 DROP PROCEDURE migrar_detalle_importe;
 DROP PROCEDURE migrar_alquiler;
-
-
-DROP FUNCTION dbo.GetPersonaID;
+DROP PROCEDURE migrar_pago_alquiler;
+DROP PROCEDURE migrar_venta;
 
 DROP SCHEMA ANDY_Y_SUS_SEMINARAS;
 
