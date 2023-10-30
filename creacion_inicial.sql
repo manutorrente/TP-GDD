@@ -27,9 +27,9 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Barrio
     FOREIGN KEY (localidad_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Localidad(id_localidad)
 );
 
-CREATE TABLE ANDY_Y_SUS_SEMINARAS.Direccion
+CREATE TABLE ANDY_Y_SUS_SEMINARAS.Dirección
 (
-    id_direccion INT PRIMARY KEY IDENTITY(1,1),
+    id_dirección INT PRIMARY KEY IDENTITY(1,1),
     barrio_id INT,
     calle NVARCHAR(100),
     FOREIGN KEY (barrio_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Barrio(id_barrio)
