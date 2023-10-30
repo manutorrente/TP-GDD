@@ -14,7 +14,6 @@ entity alquiler {
     comision: numeric (18, 2)
     gastosAveriguaciones: numeric (18, 2)
     estadoAlquiler: Estado FK
-    pagoAlquiler: PagoAlquiler FK
 }
 
 entity duracion {

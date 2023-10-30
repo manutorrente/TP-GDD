@@ -184,7 +184,7 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.EstadoAnuncio
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Anuncio
 (
-    nro_anuncio INT PRIMARY KEY IDENTITY(1,1),
+    nro_anuncio INT PRIMARY KEY,
     fecha_publicacion DATETIME,
     tipo_operacion_id INT,
     inmueble_id INT,
@@ -208,7 +208,8 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Duracion
 (
     id_duracion INT PRIMARY KEY IDENTITY(1,1),
     nombre INT,
-    cantidad NUMERIC
+    cantidad NUMERIC,
+    FOREIGN KEY (nombre) REFERENCES ANDY_Y_SUS_SEMINARAS.TipoPeriodo(id_tipo_periodo)
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.DetalleImporte
@@ -230,11 +231,19 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.PagoAlquiler
     id_pago_alquiler INT PRIMARY KEY IDENTITY(1,1),
     alquiler_id INT,
     fecha_pago DATETIME,
+    nro_periodo_pago NUMERIC,
+    fecha_inicio_periodo DATETIME,
+    fecha_fin_periodo DATETIME,
+    importe NUMERIC,
+    medioPago_id INT,
+    descripcion_periodo NVARCHAR(100),
+    FOREIGN KEY (alquiler_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Alquiler(id_alquiler),
+    FOREIGN KEY (medioPago_id) REFERENCES ANDY_Y_SUS_SEMINARAS.MedioPago(id_medio_pago)
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Alquiler
 (
-    id_alquiler INT PRIMARY KEY IDENTITY(1,1),
+    id_alquiler INT PRIMARY KEY,
     anuncio_id INT,
     inquilino_id INT,
     duracion_id INT,
@@ -245,13 +254,11 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Alquiler
     comision NUMERIC(18, 2),
     gastos_averiguaciones NUMERIC(18, 2),
     estado_alquiler_id INT,
-    pago_alquiler_id INT,
     FOREIGN KEY (anuncio_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Anuncio(nro_anuncio),
     FOREIGN KEY (inquilino_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Inquilino(id_inquilino),
     FOREIGN KEY (duracion_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Duracion(id_duracion),
     FOREIGN KEY (detalle_importe_id) REFERENCES ANDY_Y_SUS_SEMINARAS.DetalleImporte(id_detalle_importe),
     FOREIGN KEY (estado_alquiler_id) REFERENCES ANDY_Y_SUS_SEMINARAS.EstadoAlquiler(id_estado_alquiler),
-    FOREIGN KEY (pago_alquiler_id) REFERENCES ANDY_Y_SUS_SEMINARAS.PagoAlquiler(id_pago_alquiler)
 );
 
 -- Payment related tables
