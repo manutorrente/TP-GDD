@@ -66,3 +66,9 @@ BEGIN
 END
 GO
 ```
+
+
+# Alquiler - Modicacion del DER
+Nos dimos cuenta que no era necesario tener una tabla externa Duracion que contenga el tipo de periodo y la cantidad de periodos dado que el tipo de periodo ya se encuentra en el anuncio del alquiler por lo que seria un dato desnormalizado
+
+Ahora simplemenmte la duracion es un entero con la cantidad de periodos

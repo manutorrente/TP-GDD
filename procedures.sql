@@ -358,20 +358,6 @@ END
 GO
 
 
-CREATE PROCEDURE migrar_duracion
-AS
-BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Duracion (tipo_periodo_id, cantidad)
-    SELECT DISTINCT
-        tp.id_tipo_periodo,
-        ALQUILER_CANT_PERIODOS
-    FROM gd_esquema.Maestra m
-    JOIN ANDY_Y_SUS_SEMINARAS.TipoPeriodo tp ON m.ANUNCIO_TIPO_PERIODO = tp.nombre
-    where ALQUILER_CANT_PERIODOS IS NOT NULL
-END
-GO
-
-
 CREATE PROCEDURE migrar_venta
 AS
 BEGIN   
@@ -432,7 +418,7 @@ BEGIN
         inq.id_inquilino,
         e.id_estado_alquiler,
         d.id_detalle_importe,
-        du.id_duracion,
+        em.ALQUILER_CANT_PERIODOS,
         em.ALQUILER_DEPOSITO,
         em.ALQUILER_COMISION,
         em.ALQUILER_GASTOS_AVERIGUA,
@@ -443,7 +429,6 @@ BEGIN
     JOIN ANDY_Y_SUS_SEMINARAS.TipoPeriodo t ON em.ANUNCIO_TIPO_PERIODO = t.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.EstadoAlquiler e ON em.ALQUILER_ESTADO = e.nombre
     LEFT JOIN ANDY_Y_SUS_SEMINARAS.DetalleImporte d ON em.DETALLE_ALQ_NRO_PERIODO_INI = d.nro_periodo_inicio AND em.DETALLE_ALQ_NRO_PERIODO_FIN = d.nro_periodo_fin AND em.DETALLE_ALQ_PRECIO = d.precio
-    LEFT JOIN ANDY_Y_SUS_SEMINARAS.Duracion du ON t.id_tipo_periodo = du.tipo_periodo_id AND em.ALQUILER_CANT_PERIODOS = du.cantidad
     JOIN ANDY_Y_SUS_SEMINARAS.Anuncio a ON em.ANUNCIO_CODIGO = a.nro_anuncio
     WHERE NOT EXISTS (
         SELECT 1
@@ -480,7 +465,6 @@ EXEC migrar_detalle_importe;
 
 -- Migrar propietarios de inmuebles, duraciones y pagos
 EXEC migrar_propietario_inmueble;
-EXEC migrar_duracion;
 EXEC migrar_alquiler;
 EXEC migrar_pago_alquiler;
 
