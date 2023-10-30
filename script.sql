@@ -137,7 +137,7 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.InmuebleCaracteristica
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Sucursal
 (
-    codigo_sucursal NUMERIC PRIMARY KEY IDENTITY(1,1),
+    codigo_sucursal NUMERIC PRIMARY KEY,
     direccion_id INT,
     nombre NVARCHAR(100),
     telefono NVARCHAR(100),
@@ -440,12 +440,12 @@ GO
 CREATE PROCEDURE migrar_agentes
 AS
 BEGIN
-    CREATE TABLE #TempAgente (id_persona INT);
+    CREATE TABLE #TempAgente (id_persona INT, sucursal_id NUMERIC);
 
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
-    OUTPUT inserted.id_persona INTO #TempAgente (id_persona)
+    OUTPUT inserted.id_persona, NULL INTO #TempAgente (id_persona, sucursal_id)
     SELECT DISTINCT AGENTE_NOMBRE, AGENTE_APELLIDO, AGENTE_DNI, AGENTE_FECHA_REGISTRO, AGENTE_TELEFONO, AGENTE_MAIL, AGENTE_FECHA_NAC
-    FROM gd_esquema.Maestra 
+    FROM gd_esquema.Maestra m
     WHERE AGENTE_NOMBRE IS NOT NULL
     AND AGENTE_APELLIDO IS NOT NULL
     AND AGENTE_DNI IS NOT NULL
@@ -454,12 +454,15 @@ BEGIN
     AND AGENTE_MAIL IS NOT NULL
     AND AGENTE_FECHA_NAC IS NOT NULL;
 
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Agente (persona_id)
-    SELECT id_persona FROM #TempAgente;
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Agente (persona_id, sucursal_id)
+    SELECT id_persona, t.sucursal_id
+    FROM #TempAgente t
+    JOIN ANDY_Y_SUS_SEMINARAS.Sucursal s ON m.SUCURSAL_CODIGO = s.codigo_sucursal;
 
     DROP TABLE #TempAgente;
 END
 GO
+
 
 CREATE PROCEDURE migrar_propietarios
 AS
@@ -614,8 +617,9 @@ GO
 CREATE PROCEDURE migrar_sucursal
 AS
 BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Sucursal (direccion_id, nombre, telefono)
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Sucursal (codigo_sucursal, direccion_id, nombre, telefono)
     SELECT DISTINCT
+        SUCURSAL_CODIGO,
         d.id_direccion,
         SUCURSAL_NOMBRE,
         SUCURSAL_TELEFONO
@@ -774,6 +778,7 @@ EXEC migrar_provincias;
 EXEC migrar_localidad;
 EXEC migrar_barrios;
 EXEC migrar_direccion;
+EXEC migrar_sucursal;
 
 EXEC migrar_tipificados;
 
@@ -785,13 +790,12 @@ EXEC migrar_propietarios;
 EXEC migrar_compradores;
 
 EXEC migrar_inmueble;
-
 EXEC migrar_caracteristica_inmueble;
-EXEC migrar_sucursal;
+EXEC migrar_propietario_inmueble;
+
 EXEC migrar_anuncio;
 EXEC migrar_detalle_importe;
 
-EXEC migrar_propietario_inmueble;
 EXEC migrar_alquiler;
 EXEC migrar_pago_alquiler;
 
