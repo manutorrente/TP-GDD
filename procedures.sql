@@ -46,19 +46,53 @@ BEGIN
 end
 go
 
-CREATE PROCEDURE migrar_carateristica
+CREATE PROCEDURE migrar_carateristicas
 AS
 BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Caracteristica (nombre)
-    VALUES ('WIFI'),
-           ('CABLE'),
-           ('CALEFACCION'),
-           ('GAS'),
-           ('COCHERA'),
-           ('PISCINA'),
-           ('AIRE ACONDICIONADO'),
-           ('AMOBLAMIENTO');
+   INSERT INTO ANDY_Y_SUS_SEMINARAS.Caracteristica (nombre)
+    VALUES ('cable'), ('calefaccion'), ('gas'), ('wifi');
 END
+GO
+
+CREATE PROCEDURE migrar_caracteristica_inmueble
+AS 
+BEGIN
+    INSERT INTO  ANDY_Y_SUS_SEMINARAS.InmuebleCaracteristica (inmueble_id, caracteristica_id, valor)
+    SELECT
+        i.nro_inmueble,
+        c.id_caracteristica,
+        m.INMUEBLE_CARACTERISTICA_CABLE
+    FROM gd_esquema.Maestra AS m
+    JOIN Inmueble AS i ON m.codigo_inmueble = i.codigo_inmueble
+    JOIN Caracteristicas AS c ON c.nombre_caracteristica = 'cable';
+
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.InmuebleCaracteristicas (id_inmueble, id_caracteristica, valor)
+    SELECT
+        i.nro_inmueble,
+        c.id_caracteristica,
+        m.INMUEBLE_CARACTERISTICA_CALEFACCION
+    FROM tu_tabla_maestra AS m
+    JOIN Inmueble AS i ON m.codigo_inmueble = i.codigo_inmueble
+    JOIN Caracteristicas AS c ON c.nombre_caracteristica = 'calefaccion';
+
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.InmuebleCaracteristicas (id_inmueble, id_caracteristica, valor)
+    SELECT
+        i.nro_inmueble,
+        c.id_caracteristica,
+        m.INMUEBLE_CARACTERISTICA_GAS
+    FROM tu_tabla_maestra AS m
+    JOIN Inmueble AS i ON m.codigo_inmueble = i.codigo_inmueble
+    JOIN Caracteristicas AS c ON c.nombre_caracteristica = 'gas';
+
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.InmuebleCaracteristicas (id_inmueble, id_caracteristica, valor)
+    SELECT
+        i.nro_inmueble,
+        c.id_caracteristica,
+        m.INMUEBLE_CARACTERISTICA_WIFI
+    FROM tu_tabla_maestra AS m
+    JOIN Inmueble AS i ON m.codigo_inmueble = i.codigo_inmueble
+    JOIN Caracteristicas AS c ON c.nombre_caracteristica = 'wifi';
+END 
 GO
 
 

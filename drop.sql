@@ -36,7 +36,8 @@ DROP TABLE ANDY_Y_SUS_SEMINARAS.Sucursal;
 
 DROP PROCEDURE migrar_tipificado;
 DROP PROCEDURE migrar_tipificados;
-DROP PROCEDURE migrar_carateristica;
+DROP PROCEDURE migrar_carateristicas;
+DROP PROCEDURE migrar_caracteristica_inmueble;
 DROP PROCEDURE migrar_inquilinos;
 DROP PROCEDURE migrar_agentes;
 DROP PROCEDURE migrar_propietarios;

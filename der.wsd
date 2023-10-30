@@ -32,7 +32,7 @@ entity pagoAlquiler {
     descripcionPeriodo: nvarchar(100)
     fechaInicioPeriodo: DateTime
     fechaFinPeriodo: DateTime
-    importe: numericeger
+    importe: numeric
     medioPago: MedioPago FK
 }
 
@@ -262,9 +262,7 @@ detalleImporte }|--||alquiler
 alquiler ||-|{ pagoAlquiler
 estadoAlquiler }|--|| alquiler
 alquiler |o--|| anuncio
-alquiler ||--|{ duracion
 
-duracion }|--|| tipoPeriodo
 
 
 ' Pagos

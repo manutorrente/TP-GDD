@@ -126,10 +126,10 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Caracteristica
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.InmuebleCaracteristica
 (
+    id INT PRIMARY KEY IDENTITY(1,1),
     inmueble_id INT,
     caracteristica_id INT,
-    id INT IDENTITY(1,1),
-    PRIMARY KEY (inmueble_id, caracteristica_id),
+    valor BIT,
     FOREIGN KEY (inmueble_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Inmueble(nro_inmueble),
     FOREIGN KEY (caracteristica_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Caracteristica(id_caracteristica)
 );
@@ -359,15 +359,58 @@ BEGIN
     VALUES ('WIFI'),
            ('CABLE'),
            ('CALEFACCION'),
-           ('GAS'),
-           ('COCHERA'),
-           ('PISCINA'),
-           ('AIRE ACONDICIONADO'),
-           ('AMOBLAMIENTO');
+           ('GAS')
 END
 GO
 
+CREATE PROCEDURE migrar_carateristicas
+AS
+BEGIN
+   INSERT INTO ANDY_Y_SUS_SEMINARAS.Caracteristica (nombre)
+    VALUES ('cable'), ('calefaccion'), ('gas'), ('wifi');
+END
+GO
 
+CREATE PROCEDURE migrar_caracteristica_inmueble
+AS 
+BEGIN
+    INSERT INTO  ANDY_Y_SUS_SEMINARAS.InmuebleCaracteristica (inmueble_id, caracteristica_id, valor)
+    SELECT DISTINCT
+        i.nro_inmueble,
+        c.id_caracteristica,
+        m.INMUEBLE_CARACTERISTICA_CABLE
+    FROM gd_esquema.Maestra AS m
+    JOIN ANDY_Y_SUS_SEMINARAS.Inmueble AS i ON m.INMUEBLE_CODIGO = i.nro_inmueble
+    JOIN ANDY_Y_SUS_SEMINARAS.Caracteristica AS c ON c.nombre = 'cable';
+
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.InmuebleCaracteristica (inmueble_id, caracteristica_id, valor)
+    SELECT DISTINCT
+        i.nro_inmueble,
+        c.id_caracteristica,
+        m.INMUEBLE_CARACTERISTICA_CALEFACCION
+    FROM gd_esquema.Maestra AS m
+    JOIN ANDY_Y_SUS_SEMINARAS.Inmueble AS i ON m.INMUEBLE_CODIGO = i.nro_inmueble
+    JOIN ANDY_Y_SUS_SEMINARAS.Caracteristica AS c ON c.nombre = 'calefaccion';
+
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.InmuebleCaracteristica (inmueble_id, caracteristica_id, valor)
+    SELECT DISTINCT
+        i.nro_inmueble,
+        c.id_caracteristica,
+        m.INMUEBLE_CARACTERISTICA_GAS
+    FROM gd_esquema.Maestra AS m
+    JOIN ANDY_Y_SUS_SEMINARAS.Inmueble AS i ON m.INMUEBLE_CODIGO = i.nro_inmueble
+    JOIN ANDY_Y_SUS_SEMINARAS.Caracteristica AS c ON c.nombre = 'gas';
+
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.InmuebleCaracteristica (inmueble_id, caracteristica_id, valor)
+    SELECT DISTINCT
+        i.nro_inmueble,
+        c.id_caracteristica,
+        m.INMUEBLE_CARACTERISTICA_WIFI
+    FROM gd_esquema.Maestra AS m
+    JOIN ANDY_Y_SUS_SEMINARAS.Inmueble AS i ON m.INMUEBLE_CODIGO = i.nro_inmueble
+    JOIN ANDY_Y_SUS_SEMINARAS.Caracteristica AS c ON c.nombre = 'wifi';
+END 
+GO
 
 
 CREATE PROCEDURE migrar_inquilinos 
@@ -727,8 +770,6 @@ END
 GO
 
 
-
-
 EXEC migrar_provincias;
 EXEC migrar_localidad;
 EXEC migrar_barrios;
@@ -736,7 +777,7 @@ EXEC migrar_direccion;
 
 EXEC migrar_tipificados;
 
-EXEC migrar_carateristica;
+EXEC migrar_carateristicas;
 
 EXEC migrar_inquilinos;
 EXEC migrar_agentes;
@@ -745,6 +786,7 @@ EXEC migrar_compradores;
 
 EXEC migrar_inmueble;
 
+EXEC migrar_caracteristica_inmueble;
 EXEC migrar_sucursal;
 EXEC migrar_anuncio;
 EXEC migrar_detalle_importe;
@@ -757,3 +799,63 @@ EXEC migrar_pago_venta;
 EXEC migrar_venta;
 
 
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.PagoAlquiler;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.PagoVenta;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.MedioPago;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Alquiler;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.EstadoAlquiler;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.DetalleImporte;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Duracion;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Anuncio;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.EstadoAnuncio;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.TipoPeriodo;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.TipoDeMoneda;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.TipoOperacion;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Comprador;
+
+
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Inquilino;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Agente;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Propietario;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Persona;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Estado;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Orientacion;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Disposicion;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Caracteristica;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.CantAmbientes;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.InmuebleCaracteristica;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Inmueble;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.PropietarioDeInmueble;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.TipoDeInmueble;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Direccion;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Barrio;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Localidad;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Provincia;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Venta;
+-- DROP TABLE ANDY_Y_SUS_SEMINARAS.Sucursal;
+
+
+-- DROP PROCEDURE migrar_tipificado;
+-- DROP PROCEDURE migrar_tipificados;
+-- DROP PROCEDURE migrar_carateristica;
+-- DROP PROCEDURE migrar_inquilinos;
+-- DROP PROCEDURE migrar_agentes;
+-- DROP PROCEDURE migrar_propietarios;
+-- DROP PROCEDURE migrar_compradores;
+-- DROP PROCEDURE migrar_provincias;
+-- DROP PROCEDURE migrar_localidad;
+-- DROP PROCEDURE migrar_barrios;
+-- DROP PROCEDURE migrar_direccion;
+-- DROP PROCEDURE migrar_inmueble;
+-- DROP PROCEDURE migrar_sucursal;
+-- DROP PROCEDURE migrar_anuncio;
+-- DROP PROCEDURE migrar_propietario_inmueble;
+-- DROP PROCEDURE migrar_tipo_periodo;
+-- DROP PROCEDURE migrar_duracion;
+-- DROP PROCEDURE migrar_pago_venta;
+-- DROP PROCEDURE migrar_detalle_importe;
+-- DROP PROCEDURE migrar_alquiler;
+-- DROP PROCEDURE migrar_pago_alquiler;
+-- DROP PROCEDURE migrar_venta;
+
+-- DROP SCHEMA ANDY_Y_SUS_SEMINARAS;
