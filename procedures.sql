@@ -227,6 +227,7 @@ BEGIN
             SUCURSAL_DIRECCION AS direccion,
             NULL AS barrio
         FROM gd_esquema.Maestra
+        
     )
     
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Direccion (calle, barrio_id)
@@ -254,7 +255,7 @@ BEGIN
     FROM gd_esquema.Maestra m
     JOIN ANDY_Y_SUS_SEMINARAS.CantAmbientes c ON m.INMUEBLE_CANT_AMBIENTES = c.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.TipoDeInmueble t ON m.INMUEBLE_TIPO_INMUEBLE = t.nombre
-    JOIN ANDY_Y_SUS_SEMINARAS.Direccion d ON m.INMUEBLE_DIRECCION = d.calle
+    JOIN ANDY_Y_SUS_SEMINARAS.Direccion d ON m.INMUEBLE_DIRECCION = d.callenull
     JOIN ANDY_Y_SUS_SEMINARAS.Disposicion dis ON m.INMUEBLE_DISPOSICION = dis.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.Orientacion ori ON m.INMUEBLE_ORIENTACION = ori.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.Estado e ON m.INMUEBLE_ESTADO = e.nombre
