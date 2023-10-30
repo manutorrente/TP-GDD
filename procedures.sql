@@ -1,7 +1,7 @@
 use GD2C2023
 GO
 
-CREATE PROCEDURE migrar_tipificado -- con nombre
+CREATE PROCEDURE migrar_tipificado
     @TableName NVARCHAR(100),
     @SourceColumn NVARCHAR(100)
 AS
@@ -12,12 +12,18 @@ BEGIN
         INSERT INTO ' + @TableName + '
         (nombre)
         SELECT DISTINCT ' + @SourceColumn + '
-        FROM gd_esquema.Maestra
-        WHERE ' + @SourceColumn + ' IS NOT NULL';
+        FROM gd_esquema.Maestra AS M
+        WHERE ' + @SourceColumn + ' IS NOT NULL
+        AND NOT EXISTS (
+            SELECT 1
+            FROM ' + @TableName + ' AS T
+            WHERE T.nombre = M.' + @SourceColumn + '
+        )';
 
     EXEC sp_executesql @SqlStatement;
 END
 GO
+
 
 CREATE PROCEDURE migrar_tipificados
 AS
@@ -66,7 +72,14 @@ BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
     OUTPUT inserted.id_persona INTO #TempInquilino (id_persona)
     SELECT DISTINCT INQUILINO_NOMBRE, INQUILINO_APELLIDO, INQUILINO_DNI, INQUILINO_FECHA_REGISTRO, INQUILINO_TELEFONO, INQUILINO_MAIL, INQUILINO_FECHA_NAC
-    FROM gd_esquema.Maestra;
+    FROM gd_esquema.Maestra 
+    WHERE INQUILINO_NOMBRE IS NOT NULL
+    AND INQUILINO_APELLIDO IS NOT NULL
+    AND INQUILINO_DNI IS NOT NULL
+    AND INQUILINO_FECHA_REGISTRO IS NOT NULL
+    AND INQUILINO_TELEFONO IS NOT NULL
+    AND INQUILINO_MAIL IS NOT NULL
+    AND INQUILINO_FECHA_NAC IS NOT NULL; 
 
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Inquilino (persona_id)
     SELECT id_persona FROM #TempInquilino;
@@ -83,7 +96,14 @@ BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
     OUTPUT inserted.id_persona INTO #TempAgente (id_persona)
     SELECT DISTINCT AGENTE_NOMBRE, AGENTE_APELLIDO, AGENTE_DNI, AGENTE_FECHA_REGISTRO, AGENTE_TELEFONO, AGENTE_MAIL, AGENTE_FECHA_NAC
-    FROM gd_esquema.Maestra;
+    FROM gd_esquema.Maestra 
+    WHERE AGENTE_NOMBRE IS NOT NULL
+    AND AGENTE_APELLIDO IS NOT NULL
+    AND AGENTE_DNI IS NOT NULL
+    AND AGENTE_FECHA_REGISTRO IS NOT NULL
+    AND AGENTE_TELEFONO IS NOT NULL
+    AND AGENTE_MAIL IS NOT NULL
+    AND AGENTE_FECHA_NAC IS NOT NULL;
 
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Agente (persona_id)
     SELECT id_persona FROM #TempAgente;
@@ -100,7 +120,14 @@ BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
     OUTPUT inserted.id_persona INTO #TempPropietario (id_persona)
     SELECT DISTINCT PROPIETARIO_NOMBRE, PROPIETARIO_APELLIDO, PROPIETARIO_DNI, PROPIETARIO_FECHA_REGISTRO, PROPIETARIO_TELEFONO, PROPIETARIO_MAIL, PROPIETARIO_FECHA_NAC
-    FROM gd_esquema.Maestra;
+    FROM gd_esquema.Maestra
+    WHERE PROPIETARIO_NOMBRE IS NOT NULL
+    AND PROPIETARIO_APELLIDO IS NOT NULL
+    AND PROPIETARIO_DNI IS NOT NULL
+    AND PROPIETARIO_FECHA_REGISTRO IS NOT NULL
+    AND PROPIETARIO_TELEFONO IS NOT NULL
+    AND PROPIETARIO_MAIL IS NOT NULL
+    AND PROPIETARIO_FECHA_NAC IS NOT NULL;
 
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Propietario (persona_id)
     SELECT id_persona FROM #TempPropietario;
@@ -117,7 +144,14 @@ BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
     OUTPUT inserted.id_persona INTO #TempComprador (id_persona)
     SELECT DISTINCT COMPRADOR_NOMBRE, COMPRADOR_APELLIDO, COMPRADOR_DNI, COMPRADOR_FECHA_REGISTRO, COMPRADOR_TELEFONO, COMPRADOR_MAIL, COMPRADOR_FECHA_NAC
-    FROM gd_esquema.Maestra;
+    FROM gd_esquema.Maestra 
+    WHERE COMPRADOR_NOMBRE IS NOT NULL
+    AND COMPRADOR_APELLIDO IS NOT NULL
+    AND COMPRADOR_DNI IS NOT NULL
+    AND COMPRADOR_FECHA_REGISTRO IS NOT NULL
+    AND COMPRADOR_TELEFONO IS NOT NULL
+    AND COMPRADOR_MAIL IS NOT NULL
+    AND COMPRADOR_FECHA_NAC IS NOT NULL;
 
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Comprador (persona_id)
     SELECT id_persona FROM #TempComprador;
@@ -125,6 +159,7 @@ BEGIN
     DROP TABLE #TempComprador;
 END
 GO
+
 CREATE PROCEDURE migrar_provincias
 AS
 BEGIN
@@ -143,22 +178,21 @@ GO
 CREATE PROCEDURE migrar_localidad
 AS
 BEGIN
-    WITH CTE AS (
-        SELECT
-            INMUEBLE_LOCALIDAD AS localidad,
-            INMUEBLE_PROVINCIA AS provincia
-        FROM gd_esquema.Maestra
-        UNION
-        SELECT
-            SUCURSAL_LOCALIDAD,
-            SUCURSAL_PROVINCIA 
-        FROM gd_esquema.Maestra
-    )
-    
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Localidad (nombre, provincia_id)
-    SELECT DISTINCT c.localidad, p.id_provincia
-    FROM CTE c
-    JOIN ANDY_Y_SUS_SEMINARAS.Provincia p ON c.provincia = p.nombre;
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Localidad
+        (nombre, provincia_id)
+    SELECT DISTINCT 
+        INMUEBLE_LOCALIDAD,
+        p.id_provincia
+    FROM gd_esquema.Maestra m
+    JOIN ANDY_Y_SUS_SEMINARAS.Provincia p ON m.INMUEBLE_PROVINCIA = p.nombre
+    WHERE INMUEBLE_LOCALIDAD IS NOT NULL
+    UNION
+    SELECT DISTINCT
+        SUCURSAL_LOCALIDAD,
+        p.id_provincia
+    FROM gd_esquema.Maestra m
+    JOIN ANDY_Y_SUS_SEMINARAS.Provincia p ON m.SUCURSAL_PROVINCIA = p.nombre
+    WHERE SUCURSAL_LOCALIDAD IS NOT NULL
 END
 GO
 
@@ -168,7 +202,7 @@ CREATE PROCEDURE migrar_barrios
 AS
 BEGIN
  WITH CTE AS (
-        SELECT
+        SELECT DISTINCT
             INMUEBLE_BARRIO AS barrio,
             INMUEBLE_LOCALIDAD AS localidad
         FROM gd_esquema.Maestra)
@@ -184,12 +218,12 @@ CREATE PROCEDURE migrar_direccion
 AS
 BEGIN
     WITH CTE AS (
-        SELECT
+        SELECT DISTINCT
             INMUEBLE_DIRECCION AS direccion,
             INMUEBLE_BARRIO AS barrio
         FROM gd_esquema.Maestra
         UNION
-        SELECT
+        SELECT DISTINCT
             SUCURSAL_DIRECCION AS direccion,
             NULL AS barrio
         FROM gd_esquema.Maestra
@@ -198,7 +232,7 @@ BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Direccion (calle, barrio_id)
     SELECT DISTINCT c.direccion, b.id_barrio
     FROM CTE c
-    JOIN ANDY_Y_SUS_SEMINARAS.Barrio b ON c.barrio = b.nombre;
+    LEFT JOIN ANDY_Y_SUS_SEMINARAS.Barrio b ON c.barrio = b.nombre;
 END
 GO
 
@@ -311,18 +345,6 @@ BEGIN
 END
 GO
 
-
-
-
-CREATE PROCEDURE migrar_tipo_periodo
-AS
-BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.TipoPeriodo (nombre)
-    SELECT DISTINCT ANUNCIO_TIPO_PERIODO
-    FROM gd_esquema.Maestra
-END
-GO
-
 CREATE PROCEDURE migrar_pago_alquiler
 AS
 BEGIN
@@ -352,6 +374,7 @@ BEGIN
         ALQUILER_CANT_PERIODOS
     FROM gd_esquema.Maestra m
     JOIN ANDY_Y_SUS_SEMINARAS.TipoPeriodo tp ON m.ANUNCIO_TIPO_PERIODO = tp.nombre
+    where ALQUILER_CANT_PERIODOS IS NOT NULL
 END
 GO
 
@@ -432,27 +455,40 @@ BEGIN
 END
 GO
 
+-- Primero, migra los datos de tipificados
+EXEC migrar_tipificados;
 
+-- A continuación, migrar las tablas de características
+EXEC migrar_carateristica;
 
+-- Migrar los datos de personas
+EXEC migrar_inquilinos;
+EXEC migrar_agentes;
+EXEC migrar_propietarios;
+EXEC migrar_compradores;
 
+-- Migrar localidades, provincias, barrios, direcciones e inmuebles
+EXEC migrar_provincias;
+EXEC migrar_localidad;
+EXEC migrar_barrios;
+EXEC migrar_direccion;
+EXEC migrar_inmueble;
 
+-- Migrar sucursales, anuncios y detalles de importe
+EXEC migrar_sucursal;
+EXEC migrar_anuncio;
+EXEC migrar_detalle_importe;
 
-EXEC migrar_tipificados
-EXEC migrar_inquilinos
-EXEC migrar_agentes
-EXEC migrar_propietarios
-EXEC migrar_compradores
-EXEC migrar_provincias
-EXEC migrar_localidad
-EXEC migrar_barrios
-EXEC migrar_direccion
-EXEC migrar_inmueble
-EXEC migrar_sucursal
-EXEC migrar_tipo_periodo
-EXEC migrar_duracion
-EXEC migrar_venta
-EXEC migrar_detalle_importe
-EXEC migrar_alquiler
+-- Migrar propietarios de inmuebles, duraciones y pagos
+EXEC migrar_propietario_inmueble;
+EXEC migrar_duracion;
+EXEC migrar_pago_alquiler;
+
+-- Migrar venta, pago de venta y alquiler
+EXEC migrar_venta;
+EXEC migrar_pago_venta;
+EXEC migrar_alquiler;
+
 
 
 

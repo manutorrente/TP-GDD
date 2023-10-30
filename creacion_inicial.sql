@@ -39,31 +39,31 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Direccion
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.TipoDeInmueble
 (
     id_tipo_de_inmueble INT PRIMARY KEY IDENTITY(1,1),
-    nombre NVARCHAR(100)
+    nombre NVARCHAR(100) UNIQUE
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Disposicion
 (
     id_disposicion INT PRIMARY KEY IDENTITY(1,1),
-    nombre NVARCHAR(100)
+    nombre NVARCHAR(100) UNIQUE
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Orientacion
 (
     id_orientacion INT PRIMARY KEY IDENTITY(1,1),
-    nombre NVARCHAR(100)
+    nombre NVARCHAR(100) UNIQUE
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Estado
 (
     id_estado INT PRIMARY KEY IDENTITY(1,1),
-    nombre NVARCHAR(100)
+    nombre NVARCHAR(100) UNIQUE
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.CantAmbientes
 (
     id_cant_ambientes INT PRIMARY KEY IDENTITY(1,1),
-    nombre NVARCHAR(100)
+    nombre NVARCHAR(100) UNIQUE
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Inmueble
@@ -79,7 +79,7 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Inmueble
     estado_id INT,
     antiguedad INT,
     expensas NUMERIC,
-    FOREIGN KEY (cantAmbientes_id) REFERENCES ANDY_Y_SUS_SEMINARAS.CantAmbientes(id_cant_ambientes), 
+    FOREIGN KEY(cantAmbientes_id) REFERENCES ANDY_Y_SUS_SEMINARAS.CantAmbientes(id_cant_ambientes), 
     FOREIGN KEY (tipo_de_inmueble_id) REFERENCES ANDY_Y_SUS_SEMINARAS.TipoDeInmueble(id_tipo_de_inmueble),
     FOREIGN KEY (direccion_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Direccion(id_direccion),
     FOREIGN KEY (disposicion_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Disposicion(id_disposicion),
@@ -164,7 +164,7 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Comprador
     FOREIGN KEY (persona_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Persona(id_persona)
 );
 
--- Anuncio related tables
+
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.TipoOperacion
 (
     id_tipo_operacion INT PRIMARY KEY IDENTITY(1,1),
@@ -174,7 +174,7 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.TipoOperacion
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.TipoDeMoneda
 (
     id_moneda INT PRIMARY KEY IDENTITY(1,1),
-    nombre NVARCHAR(100)
+    nombre NVARCHAR(100) UNIQUE
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.TipoPeriodo
