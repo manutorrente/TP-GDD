@@ -8,7 +8,7 @@ GO
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Provincia
 (
     id_provincia INT PRIMARY KEY IDENTITY(1,1),
-    nombre NVARCHAR(100)
+    nombre NVARCHAR(100) UNIQUE
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Localidad
@@ -16,7 +16,8 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Localidad
     id_localidad INT PRIMARY KEY IDENTITY(1,1),
     nombre NVARCHAR(100),
     provincia_id INT,
-    FOREIGN KEY (provincia_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Provincia(id_provincia)
+    FOREIGN KEY (provincia_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Provincia(id_provincia),
+    CONSTRAINT UC_Localidad_NombreProvincia UNIQUE (nombre, provincia_id)
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Barrio
@@ -24,7 +25,8 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Barrio
     id_barrio INT PRIMARY KEY IDENTITY(1,1),
     nombre NVARCHAR(100),
     localidad_id INT,
-    FOREIGN KEY (localidad_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Localidad(id_localidad)
+    FOREIGN KEY (localidad_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Localidad(id_localidad),
+    CONSTRAINT UC_Barrio_NombreLocalidad UNIQUE (nombre, localidad_id)
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Dirección
@@ -32,7 +34,8 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Dirección
     id_dirección INT PRIMARY KEY IDENTITY(1,1),
     barrio_id INT,
     calle NVARCHAR(100),
-    FOREIGN KEY (barrio_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Barrio(id_barrio)
+    FOREIGN KEY (barrio_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Barrio(id_barrio),
+    CONSTRAINT UC_Direccion_CalleBarrio UNIQUE (calle, barrio_id)
 );
 
 -- Property related tables
@@ -68,7 +71,7 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.CantAmbientes
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Inmueble
 (
-    nro_inmueble INT PRIMARY KEY IDENTITY(1,1),
+    nro_inmueble INT PRIMARY KEY,
     tipo_de_inmueble_id INT,
     descripcion NVARCHAR(100),
     direccion_id INT,

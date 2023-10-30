@@ -6,7 +6,7 @@ entity alquiler {
     --
     anuncio: Anuncio FK
     inquilino: inquilino FK
-    duracion: Duracion FK
+    duracion: numeric(18, 2)
     fechaInicio: DateTime
     fechaFin: DateTime
     detalleImporte: DetalleImporte FK
@@ -16,12 +16,6 @@ entity alquiler {
     estadoAlquiler: Estado FK
 }
 
-entity duracion {
-    idDuracion: numeric PK
-    --
-    id_tipo_periodo: tipoPeriodo FK
-    cantidad: numeric
-}
 
 entity detalleImporte {
     idDetalleImporte: numeric

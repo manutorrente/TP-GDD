@@ -165,10 +165,10 @@ AS
 BEGIN
     INSERT into ANDY_Y_SUS_SEMINARAS.Provincia
         (nombre)
-            SELECT DISTINCT INMUEBLE_PROVINCIA
+        SELECT DISTINCT INMUEBLE_PROVINCIA
         FROM gd_esquema.Maestra
         WHERE INMUEBLE_PROVINCIA IS NOT NULL
-    UNION
+        UNION
         SELECT DISTINCT SUCURSAL_PROVINCIA
         FROM gd_esquema.Maestra
         WHERE SUCURSAL_PROVINCIA IS NOT NULL
@@ -180,7 +180,7 @@ AS
 BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Localidad
         (nombre, provincia_id)
-    SELECT DISTINCT 
+    (SELECT DISTINCT 
         INMUEBLE_LOCALIDAD,
         p.id_provincia
     FROM gd_esquema.Maestra m
@@ -192,7 +192,7 @@ BEGIN
         p.id_provincia
     FROM gd_esquema.Maestra m
     JOIN ANDY_Y_SUS_SEMINARAS.Provincia p ON m.SUCURSAL_PROVINCIA = p.nombre
-    WHERE SUCURSAL_LOCALIDAD IS NOT NULL
+    WHERE SUCURSAL_LOCALIDAD IS NOT NULL)
 END
 GO
 
@@ -201,47 +201,46 @@ GO
 CREATE PROCEDURE migrar_barrios
 AS
 BEGIN
- WITH CTE AS (
-        SELECT DISTINCT
-            INMUEBLE_BARRIO AS barrio,
-            INMUEBLE_LOCALIDAD AS localidad
-        FROM gd_esquema.Maestra)
-    
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Barrio
         (nombre, localidad_id)
-    SELECT DISTINCT c.barrio, l.id_localidad
-    FROM CTE c JOIN ANDY_Y_SUS_SEMINARAS.Localidad l ON c.localidad = l.nombre;
+      SELECT DISTINCT
+        INMUEBLE_BARRIO,
+        l.id_localidad
+    FROM gd_esquema.Maestra m
+    JOIN ANDY_Y_SUS_SEMINARAS.Provincia p ON m.INMUEBLE_PROVINCIA = p.nombre
+	JOIN ANDY_Y_SUS_SEMINARAS.Localidad l ON m.INMUEBLE_LOCALIDAD = l.nombre AND p.id_provincia = l.provincia_id 
+    WHERE INMUEBLE_BARRIO IS NOT NULL
 END
 GO
 
 CREATE PROCEDURE migrar_direccion
 AS
 BEGIN
-    WITH CTE AS (
-        SELECT DISTINCT
-            INMUEBLE_DIRECCION AS direccion,
-            INMUEBLE_BARRIO AS barrio
-        FROM gd_esquema.Maestra
-        UNION
-        SELECT DISTINCT
-            SUCURSAL_DIRECCION AS direccion,
-            NULL AS barrio
-        FROM gd_esquema.Maestra
-        
-    )
-    
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Direccion (calle, barrio_id)
-    SELECT DISTINCT c.direccion, b.id_barrio
-    FROM CTE c
-    LEFT JOIN ANDY_Y_SUS_SEMINARAS.Barrio b ON c.barrio = b.nombre;
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Direccion
+        (calle, barrio_id)
+    SELECT DISTINCT
+        INMUEBLE_DIRECCION,
+        b.id_barrio
+    FROM gd_esquema.Maestra m
+    JOIN ANDY_Y_SUS_SEMINARAS.Provincia p ON m.INMUEBLE_PROVINCIA = p.nombre
+    JOIN ANDY_Y_SUS_SEMINARAS.Localidad l ON m.INMUEBLE_LOCALIDAD = l.nombre AND p.id_provincia = l.provincia_id
+    JOIN ANDY_Y_SUS_SEMINARAS.Barrio b ON m.INMUEBLE_BARRIO = b.nombre AND l.id_localidad = b.localidad_id
+    WHERE INMUEBLE_DIRECCION IS NOT NULL
+    UNION
+    SELECT DISTINCT
+        SUCURSAL_DIRECCION,
+        null as barrio
+    FROM gd_esquema.Maestra m
+    WHERE SUCURSAL_DIRECCION IS NOT NULL
 END
 GO
 
 CREATE PROCEDURE migrar_inmueble
 AS
 BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Inmueble (tipo_de_inmueble_id, descripcion, direccion_id, cantAmbientes_id, superficie_total, disposicion_id, orientacion_id, estado_id, antiguedad, expensas)
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Inmueble (nro_inmueble,tipo_de_inmueble_id, descripcion, direccion_id, cantAmbientes_id, superficie_total, disposicion_id, orientacion_id, estado_id, antiguedad, expensas)
     SELECT DISTINCT
+        INMUEBLE_CODIGO,
         t.id_tipo_de_inmueble,
         INMUEBLE_DESCRIPCION,
         d.id_direccion,
@@ -255,7 +254,8 @@ BEGIN
     FROM gd_esquema.Maestra m
     JOIN ANDY_Y_SUS_SEMINARAS.CantAmbientes c ON m.INMUEBLE_CANT_AMBIENTES = c.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.TipoDeInmueble t ON m.INMUEBLE_TIPO_INMUEBLE = t.nombre
-    JOIN ANDY_Y_SUS_SEMINARAS.Direccion d ON m.INMUEBLE_DIRECCION = d.callenull
+    JOIN ANDY_Y_SUS_SEMINARAS.Barrio b ON m.INMUEBLE_BARRIO = b.nombre
+    JOIN ANDY_Y_SUS_SEMINARAS.Direccion d ON m.INMUEBLE_DIRECCION = d.calle AND b.id_barrio = d.barrio_id 
     JOIN ANDY_Y_SUS_SEMINARAS.Disposicion dis ON m.INMUEBLE_DISPOSICION = dis.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.Orientacion ori ON m.INMUEBLE_ORIENTACION = ori.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.Estado e ON m.INMUEBLE_ESTADO = e.nombre
@@ -271,21 +271,18 @@ BEGIN
         SUCURSAL_NOMBRE,
         SUCURSAL_TELEFONO
     FROM gd_esquema.Maestra m
-    JOIN ANDY_Y_SUS_SEMINARAS.Direccion d ON m.SUCURSAL_DIRECCION = d.calle
+    JOIN ANDY_Y_SUS_SEMINARAS.Direccion d ON m.SUCURSAL_DIRECCION = d.calle AND d.barrio_id IS NULL
 END
 GO
 
 -- CREATE PROCEDURE migrarDetalleImporte
 
-CREATE FUNCTION GetPersonaID
+CREATE FUNCTION GetPersonaID -- ANTES TOMABA TODOS LOS ATRIBUTOS DE LA PERSONA PERO LAS QUERYS IBA MUY LENTAS 
 (
-    @nombre NVARCHAR(100),
-    @apellido NVARCHAR(100),
+
     @dni NVARCHAR(100),
-    @telefono NVARCHAR(100),
-    @mail NVARCHAR(100),
-    @fecha_registro DATETIME,
-    @fecha_nacimiento DATETIME
+    @mail NVARCHAR(100)
+
 )
 RETURNS INT
 AS
@@ -295,13 +292,8 @@ BEGIN
     SELECT @id_persona = id_persona
     FROM ANDY_Y_SUS_SEMINARAS.Persona
     WHERE
-        nombre = @nombre
-        AND apellido = @apellido
-        AND dni = @dni
-        AND telefono = @telefono
+        dni = @dni
         AND mail = @mail
-        AND fecha_registro = @fecha_registro
-        AND fecha_nacimiento = @fecha_nacimiento;
 
     RETURN @id_persona;
 END
@@ -325,11 +317,11 @@ BEGIN
         ANUNCIO_COSTO_ANUNCIO
     FROM gd_esquema.Maestra em
     JOIN ANDY_Y_SUS_SEMINARAS.TipoOperacion t ON em.ANUNCIO_TIPO_OPERACION = t.nombre
-    JOIN ANDY_Y_SUS_SEMINARAS.Inmueble i ON em.INMUEBLE_CODIGO = i.nro_inmueble
+    JOIN ANDY_Y_SUS_SEMINARAS.Agente a ON dbo.GetPersonaID(em.AGENTE_DNI, em.AGENTE_MAIL) = a.persona_id
+    JOIN ANDY_Y_SUS_SEMINARAS.Inmueble i ON em.INMUEBLE_CODIGO = i.nro_inmueble 
     JOIN ANDY_Y_SUS_SEMINARAS.TipoDeMoneda m ON em.ANUNCIO_MONEDA = m.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.TipoPeriodo p ON em.ANUNCIO_TIPO_PERIODO = p.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.EstadoAnuncio e ON em.ANUNCIO_ESTADO = e.nombre
-    JOIN ANDY_Y_SUS_SEMINARAS.Agente a ON dbo.GetPersonaID(em.AGENTE_NOMBRE, em.AGENTE_APELLIDO, em.AGENTE_DNI, em.AGENTE_TELEFONO, em.AGENTE_MAIL, em.AGENTE_FECHA_REGISTRO, em.AGENTE_FECHA_NAC) = a.persona_id
 END
 GO
 
@@ -341,7 +333,7 @@ BEGIN
         p.id_propietario,
         i.nro_inmueble
     FROM gd_esquema.Maestra m
-    JOIN ANDY_Y_SUS_SEMINARAS.Propietario p ON dbo.GetPersonaID(m.PROPIETARIO_NOMBRE, m.PROPIETARIO_APELLIDO, m.PROPIETARIO_DNI, m.PROPIETARIO_TELEFONO, m.PROPIETARIO_MAIL, m.PROPIETARIO_FECHA_REGISTRO, m.PROPIETARIO_FECHA_NAC) = p.persona_id
+    JOIN ANDY_Y_SUS_SEMINARAS.Propietario p ON dbo.GetPersonaID(m.PROPIETARIO_DNI, m.PROPIETARIO_MAIL) = p.persona_id
     JOIN ANDY_Y_SUS_SEMINARAS.Inmueble i ON m.INMUEBLE_CODIGO = i.nro_inmueble 
 END
 GO
@@ -366,20 +358,6 @@ END
 GO
 
 
-CREATE PROCEDURE migrar_duracion
-AS
-BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Duracion (tipo_periodo_id, cantidad)
-    SELECT DISTINCT
-        tp.id_tipo_periodo,
-        ALQUILER_CANT_PERIODOS
-    FROM gd_esquema.Maestra m
-    JOIN ANDY_Y_SUS_SEMINARAS.TipoPeriodo tp ON m.ANUNCIO_TIPO_PERIODO = tp.nombre
-    where ALQUILER_CANT_PERIODOS IS NOT NULL
-END
-GO
-
-
 CREATE PROCEDURE migrar_venta
 AS
 BEGIN   
@@ -394,7 +372,7 @@ BEGIN
         VENTA_COMISION
     FROM gd_esquema.Maestra m
     JOIN ANDY_Y_SUS_SEMINARAS.Anuncio v ON m.ANUNCIO_CODIGO = v.nro_anuncio
-    JOIN ANDY_Y_SUS_SEMINARAS.Comprador c ON dbo.GetPersonaID(m.COMPRADOR_NOMBRE, m.COMPRADOR_APELLIDO, m.COMPRADOR_DNI, m.COMPRADOR_TELEFONO, m.COMPRADOR_MAIL, m.COMPRADOR_FECHA_REGISTRO, m.COMPRADOR_FECHA_NAC) = c.persona_id
+    JOIN ANDY_Y_SUS_SEMINARAS.Comprador c ON dbo.GetPersonaID(m.COMPRADOR_DNI, m.COMPRADOR_MAIL) = c.persona_id
     JOIN ANDY_Y_SUS_SEMINARAS.TipoDeMoneda tm ON m.PAGO_VENTA_MONEDA = tm.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.PagoVenta p ON m.PAGO_VENTA_IMPORTE = p.importe AND m.PAGO_VENTA_COTIZACION = p.cotizacion AND m.PAGO_VENTA_MEDIO_PAGO = p.medio_de_pago_id AND m.PAGO_VENTA_MONEDA = p.moneda_del_pago_id  
 END
@@ -440,21 +418,30 @@ BEGIN
         inq.id_inquilino,
         e.id_estado_alquiler,
         d.id_detalle_importe,
-        du.id_duracion,
+        em.ALQUILER_CANT_PERIODOS,
         em.ALQUILER_DEPOSITO,
         em.ALQUILER_COMISION,
         em.ALQUILER_GASTOS_AVERIGUA,
         a.nro_anuncio
     FROM gd_esquema.Maestra em
-    JOIN ANDY_Y_SUS_SEMINARAS.Inmueble i ON em.INMUEBLE_CODIGO = i.nro_inmueble
-    JOIN ANDY_Y_SUS_SEMINARAS.Inquilino inq ON DBO.GetPersonaID(em.INQUILINO_NOMBRE, em.INQUILINO_APELLIDO, em.INQUILINO_DNI, em.INQUILINO_TELEFONO, em.INQUILINO_MAIL, em.INQUILINO_FECHA_REGISTRO, em.INQUILINO_FECHA_NAC) = inq.persona_id
+    JOIN ANDY_Y_SUS_SEMINARAS.Persona p ON em.INQUILINO_DNI = p.dni AND em.INQUILINO_MAIL = p.mail
+    JOIN ANDY_Y_SUS_SEMINARAS.Inquilino inq ON inq.persona_id =  p.id_persona
     JOIN ANDY_Y_SUS_SEMINARAS.TipoPeriodo t ON em.ANUNCIO_TIPO_PERIODO = t.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.EstadoAlquiler e ON em.ALQUILER_ESTADO = e.nombre
-    JOIN ANDY_Y_SUS_SEMINARAS.DetalleImporte d ON em.DETALLE_ALQ_NRO_PERIODO_INI = d.nro_periodo_inicio AND em.DETALLE_ALQ_NRO_PERIODO_FIN = d.nro_periodo_fin AND em.DETALLE_ALQ_PRECIO = d.precio
-    JOIN ANDY_Y_SUS_SEMINARAS.Duracion du ON t.id_tipo_periodo = du.tipo_periodo_id AND em.ALQUILER_CANT_PERIODOS = du.cantidad
+    LEFT JOIN ANDY_Y_SUS_SEMINARAS.DetalleImporte d ON em.DETALLE_ALQ_NRO_PERIODO_INI = d.nro_periodo_inicio AND em.DETALLE_ALQ_NRO_PERIODO_FIN = d.nro_periodo_fin AND em.DETALLE_ALQ_PRECIO = d.precio
     JOIN ANDY_Y_SUS_SEMINARAS.Anuncio a ON em.ANUNCIO_CODIGO = a.nro_anuncio
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM ANDY_Y_SUS_SEMINARAS.Alquiler alq
+        WHERE alq.ALQUILER_CODIGO = em.ALQUILER_CODIGO
+    )
 END
 GO
+
+EXEC migrar_provincias;
+EXEC migrar_localidad;
+EXEC migrar_barrios;
+EXEC migrar_direccion;
 
 -- Primero, migra los datos de tipificados
 EXEC migrar_tipificados;
@@ -469,10 +456,6 @@ EXEC migrar_propietarios;
 EXEC migrar_compradores;
 
 -- Migrar localidades, provincias, barrios, direcciones e inmuebles
-EXEC migrar_provincias;
-EXEC migrar_localidad;
-EXEC migrar_barrios;
-EXEC migrar_direccion;
 EXEC migrar_inmueble;
 
 -- Migrar sucursales, anuncios y detalles de importe
@@ -482,13 +465,12 @@ EXEC migrar_detalle_importe;
 
 -- Migrar propietarios de inmuebles, duraciones y pagos
 EXEC migrar_propietario_inmueble;
-EXEC migrar_duracion;
+EXEC migrar_alquiler;
 EXEC migrar_pago_alquiler;
 
 -- Migrar venta, pago de venta y alquiler
 EXEC migrar_venta;
 EXEC migrar_pago_venta;
-EXEC migrar_alquiler;
 
 
 
