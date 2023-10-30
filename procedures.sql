@@ -36,69 +36,58 @@ BEGIN
     EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.MedioPago', 'PAGO_ALQUILER_MEDIO_PAGO'
     EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.MedioPago', 'PAGO_VENTA_MEDIO_PAGO'
     EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.Estado', 'INMUEBLE_ESTADO'
+    EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.CantAmbientes', 'INMUEBLE_CANT_AMBIENTES'
 end
 go
 
-EXEC migrar_tipificados
-GO
-DROP PROCEDURE migrar_tipificados
-GO 
 CREATE PROCEDURE migrar_carateristica
 AS
 BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Caracteristica
-        (nombre)
-    VALUES
-        ("WIFI", "CABLE", "CALEFACCION", "GAS", "COCHERA", "PISCINA", "AIRE ACONDICIONADO", "AMOBLAMIENTO")
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Caracteristica (nombre)
+    VALUES ('WIFI'),
+           ('CABLE'),
+           ('CALEFACCION'),
+           ('GAS'),
+           ('COCHERA'),
+           ('PISCINA'),
+           ('AIRE ACONDICIONADO'),
+           ('AMOBLAMIENTO');
 END
 GO
+
 
 
 
 CREATE PROCEDURE migrar_inquilinos 
 AS
 BEGIN
-    -- Create a temporary table to hold the result
     CREATE TABLE #TempInquilino (id_persona INT);
 
-    -- Insert data into the Persona table and capture the id_persona
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
     OUTPUT inserted.id_persona INTO #TempInquilino (id_persona)
     SELECT DISTINCT INQUILINO_NOMBRE, INQUILINO_APELLIDO, INQUILINO_DNI, INQUILINO_FECHA_REGISTRO, INQUILINO_TELEFONO, INQUILINO_MAIL, INQUILINO_FECHA_NAC
     FROM gd_esquema.Maestra;
 
-    -- Now insert data into the Inquilino table from the temporary table
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Inquilino (persona_id)
     SELECT id_persona FROM #TempInquilino;
 
-    -- Clean up the temporary table
     DROP TABLE #TempInquilino;
 END
-GO
-
-EXEC migrar_inquilinos
-
-
-DROP PROCEDURE migrar_inquilinos
 GO
 
 CREATE PROCEDURE migrar_agentes
 AS
 BEGIN
-    -- Create a temporary table to hold the result
     CREATE TABLE #TempAgente (id_persona INT);
 
-    -- Insert data into the Persona table and capture the id_persona
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
     OUTPUT inserted.id_persona INTO #TempAgente (id_persona)
     SELECT DISTINCT AGENTE_NOMBRE, AGENTE_APELLIDO, AGENTE_DNI, AGENTE_FECHA_REGISTRO, AGENTE_TELEFONO, AGENTE_MAIL, AGENTE_FECHA_NAC
     FROM gd_esquema.Maestra;
 
-    -- Now insert data into the Agente table from the temporary table
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Agente (persona_id)
     SELECT id_persona FROM #TempAgente;
 
-    -- Clean up the temporary table
     DROP TABLE #TempAgente;
 END
 GO
@@ -106,20 +95,16 @@ GO
 CREATE PROCEDURE migrar_propietarios
 AS
 BEGIN
-    -- Create a temporary table to hold the result
     CREATE TABLE #TempPropietario (id_persona INT);
 
-    -- Insert data into the Persona table and capture the id_persona
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
     OUTPUT inserted.id_persona INTO #TempPropietario (id_persona)
     SELECT DISTINCT PROPIETARIO_NOMBRE, PROPIETARIO_APELLIDO, PROPIETARIO_DNI, PROPIETARIO_FECHA_REGISTRO, PROPIETARIO_TELEFONO, PROPIETARIO_MAIL, PROPIETARIO_FECHA_NAC
     FROM gd_esquema.Maestra;
 
-    -- Now insert data into the Propietario table from the temporary table
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Propietario (persona_id)
     SELECT id_persona FROM #TempPropietario;
 
-    -- Clean up the temporary table
     DROP TABLE #TempPropietario;
 END
 GO
@@ -127,24 +112,19 @@ GO
 CREATE PROCEDURE migrar_compradores
 AS
 BEGIN
-    -- Create a temporary table to hold the result
     CREATE TABLE #TempComprador (id_persona INT);
 
-    -- Insert data into the Persona table and capture the id_persona
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
     OUTPUT inserted.id_persona INTO #TempComprador (id_persona)
     SELECT DISTINCT COMPRADOR_NOMBRE, COMPRADOR_APELLIDO, COMPRADOR_DNI, COMPRADOR_FECHA_REGISTRO, COMPRADOR_TELEFONO, COMPRADOR_MAIL, COMPRADOR_FECHA_NAC
     FROM gd_esquema.Maestra;
 
-    -- Now insert data into the Comprador table from the temporary table
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Comprador (persona_id)
     SELECT id_persona FROM #TempComprador;
 
-    -- Clean up the temporary table
     DROP TABLE #TempComprador;
 END
-GO 
-
+GO
 CREATE PROCEDURE migrar_provincias
 AS
 BEGIN
@@ -225,12 +205,12 @@ GO
 CREATE PROCEDURE migrar_inmueble
 AS
 BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Inmueble (tipo_de_inmueble_id, descripcion, direccion_id, ambientes, superficie_total, disposicion_id, orientacion_id, estado_id, antiguedad, expensas)
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Inmueble (tipo_de_inmueble_id, descripcion, direccion_id, cantAmbientes_id, superficie_total, disposicion_id, orientacion_id, estado_id, antiguedad, expensas)
     SELECT DISTINCT
         t.id_tipo_de_inmueble,
         INMUEBLE_DESCRIPCION,
         d.id_direccion,
-        INMUEBLE_CANT_AMBIENTES,
+        c.id_cant_ambientes,
         INMUEBLE_SUPERFICIETOTAL,
         dis.id_disposicion,
         ori.id_orientacion,
@@ -238,6 +218,7 @@ BEGIN
         INMUEBLE_ANTIGUEDAD,
         INMUEBLE_EXPESAS
     FROM gd_esquema.Maestra m
+    JOIN ANDY_Y_SUS_SEMINARAS.CantAmbientes c ON m.INMUEBLE_CANT_AMBIENTES = c.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.TipoDeInmueble t ON m.INMUEBLE_TIPO_INMUEBLE = t.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.Direccion d ON m.INMUEBLE_DIRECCION = d.calle
     JOIN ANDY_Y_SUS_SEMINARAS.Disposicion dis ON m.INMUEBLE_DISPOSICION = dis.nombre
@@ -256,7 +237,7 @@ BEGIN
         SUCURSAL_TELEFONO
     FROM gd_esquema.Maestra m
     JOIN ANDY_Y_SUS_SEMINARAS.Direccion d ON m.SUCURSAL_DIRECCION = d.calle
-    END
+END
 GO
 
 -- CREATE PROCEDURE migrarDetalleImporte
@@ -276,7 +257,6 @@ AS
 BEGIN
     DECLARE @id_persona INT;
 
-    -- Retrieve the id_persona based on the provided parameters
     SELECT @id_persona = id_persona
     FROM ANDY_Y_SUS_SEMINARAS.Persona
     WHERE
@@ -288,7 +268,6 @@ BEGIN
         AND fecha_registro = @fecha_registro
         AND fecha_nacimiento = @fecha_nacimiento;
 
-    -- Return the id_persona
     RETURN @id_persona;
 END
 GO
@@ -367,9 +346,9 @@ GO
 CREATE PROCEDURE migrar_duracion
 AS
 BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Duracion (nombre, cantidad)
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Duracion (tipo_periodo_id, cantidad)
     SELECT DISTINCT
-        tp.nombre,
+        tp.id_tipo_periodo,
         ALQUILER_CANT_PERIODOS
     FROM gd_esquema.Maestra m
     JOIN ANDY_Y_SUS_SEMINARAS.TipoPeriodo tp ON m.ANUNCIO_TIPO_PERIODO = tp.nombre
@@ -448,7 +427,7 @@ BEGIN
     JOIN ANDY_Y_SUS_SEMINARAS.TipoPeriodo t ON em.ANUNCIO_TIPO_PERIODO = t.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.EstadoAlquiler e ON em.ALQUILER_ESTADO = e.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.DetalleImporte d ON em.DETALLE_ALQ_NRO_PERIODO_INI = d.nro_periodo_inicio AND em.DETALLE_ALQ_NRO_PERIODO_FIN = d.nro_periodo_fin AND em.DETALLE_ALQ_PRECIO = d.precio
-    JOIN ANDY_Y_SUS_SEMINARAS.Duracion du ON t.nombre = du.nombre AND em.ALQUILER_CANT_PERIODOS = du.cantidad
+    JOIN ANDY_Y_SUS_SEMINARAS.Duracion du ON t.id_tipo_periodo = du.tipo_periodo_id AND em.ALQUILER_CANT_PERIODOS = du.cantidad
     JOIN ANDY_Y_SUS_SEMINARAS.Anuncio a ON em.ANUNCIO_CODIGO = a.nro_anuncio
 END
 GO
@@ -475,27 +454,6 @@ EXEC migrar_venta
 EXEC migrar_detalle_importe
 EXEC migrar_alquiler
 
--- Scripts para eliminar los procedimientos almacenados
-DROP PROCEDURE migrar_tipificado
-DROP PROCEDURE migrar_tipificados
-DROP PROCEDURE migrar_inquilinos
-DROP PROCEDURE migrar_agentes
-DROP PROCEDURE migrar_propietarios
-DROP PROCEDURE migrar_compradores
-DROP PROCEDURE migrar_provincias
-DROP PROCEDURE migrar_localidad
-DROP PROCEDURE migrar_barrios
-DROP PROCEDURE migrar_direccion
-DROP PROCEDURE migrar_inmueble
-DROP PROCEDURE migrar_sucursal
-DROP FUNCTION dbo.GetPersonaID
-DROP PROCEDURE migrar_anuncio
-DROP PROCEDURE migrar_propietario_inmueble
-DROP PROCEDURE migrar_tipo_periodo
-DROP PROCEDURE migrar_pago_alquiler
-DROP PROCEDURE migrar_duracion
-DROP PROCEDURE migrar_venta
-DROP PROCEDURE migrar_detalle_importe
-DROP PROCEDURE migrar_alquiler
-DROP PROCEDURE migrar_pago_venta
 
+
+DROP FUNCTION dbo.GetPersonaID

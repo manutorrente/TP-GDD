@@ -27,3 +27,42 @@ OUTPUT inserted.id_persona INTO #Temp (id_persona)
 
 insertamos todos los ids nuevamente creados en la tabla temporal, que después insertamos en la tabla que corresponda. 
 
+# Migración de tablas normales
+
+Para las tablas normales, el proceso es bastante simple. Se crea la tabla, se insertan los datos, y se crean las Foreign Keys.
+
+Luego, para migrarlas, simplemente se seleccionan los datos de la tabla original y se insertan en la nueva. Y los datos que son Foreign Keys se reemplazan por los ids de las tablas nuevas mediante JOINs.
+
+Un problema que surgio fue para buscar una persona, debido a que el dni no es una primary key, se debia buscar dato por dato y comprobar que todos los datos sean iguales. Para no repetir codigo, se creo una funcion que recibe los datos de la persona y devuelve el id de la misma.
+
+```sql
+CREATE FUNCTION GetPersonaID
+(
+    @nombre NVARCHAR(100),
+    @apellido NVARCHAR(100),
+    @dni NVARCHAR(100),
+    @telefono NVARCHAR(100),
+    @mail NVARCHAR(100),
+    @fecha_registro DATETIME,
+    @fecha_nacimiento DATETIME
+)
+RETURNS INT
+AS
+BEGIN
+    DECLARE @id_persona INT;
+
+    SELECT @id_persona = id_persona
+    FROM ANDY_Y_SUS_SEMINARAS.Persona
+    WHERE
+        nombre = @nombre
+        AND apellido = @apellido
+        AND dni = @dni
+        AND telefono = @telefono
+        AND mail = @mail
+        AND fecha_registro = @fecha_registro
+        AND fecha_nacimiento = @fecha_nacimiento;
+
+    RETURN @id_persona;
+END
+GO
+```

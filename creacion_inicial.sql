@@ -60,19 +60,26 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Estado
     nombre NVARCHAR(100)
 );
 
+CREATE TABLE ANDY_Y_SUS_SEMINARAS.CantAmbientes
+(
+    id_cant_ambientes INT PRIMARY KEY IDENTITY(1,1),
+    nombre NVARCHAR(100)
+);
+
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Inmueble
 (
     nro_inmueble INT PRIMARY KEY IDENTITY(1,1),
     tipo_de_inmueble_id INT,
     descripcion NVARCHAR(100),
     direccion_id INT,
-    ambientes SMALLINT,
+    cantAmbientes_id INT,
     superficie_total NUMERIC,
     disposicion_id INT,
     orientacion_id INT,
     estado_id INT,
     antiguedad INT,
     expensas NUMERIC,
+    FOREIGN KEY (cantAmbientes_id) REFERENCES ANDY_Y_SUS_SEMINARAS.CantAmbientes(id_cant_ambientes), 
     FOREIGN KEY (tipo_de_inmueble_id) REFERENCES ANDY_Y_SUS_SEMINARAS.TipoDeInmueble(id_tipo_de_inmueble),
     FOREIGN KEY (direccion_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Direccion(id_direccion),
     FOREIGN KEY (disposicion_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Disposicion(id_disposicion),
@@ -203,7 +210,6 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Anuncio
     FOREIGN KEY (agente_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Agente(id_agente)
 );
 
--- Alquiler related tables
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Duracion
 (
     id_duracion INT PRIMARY KEY IDENTITY(1,1),
@@ -226,20 +232,6 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.EstadoAlquiler
     nombre NVARCHAR(100)
 );
 
-CREATE TABLE ANDY_Y_SUS_SEMINARAS.PagoAlquiler
-(
-    id_pago_alquiler INT PRIMARY KEY IDENTITY(1,1),
-    alquiler_id INT,
-    fecha_pago DATETIME,
-    nro_periodo_pago NUMERIC,
-    fecha_inicio_periodo DATETIME,
-    fecha_fin_periodo DATETIME,
-    importe NUMERIC,
-    medioPago_id INT,
-    descripcion_periodo NVARCHAR(100),
-    FOREIGN KEY (alquiler_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Alquiler(id_alquiler),
-    FOREIGN KEY (medioPago_id) REFERENCES ANDY_Y_SUS_SEMINARAS.MedioPago(id_medio_pago)
-);
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Alquiler
 (
@@ -261,11 +253,25 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Alquiler
     FOREIGN KEY (estado_alquiler_id) REFERENCES ANDY_Y_SUS_SEMINARAS.EstadoAlquiler(id_estado_alquiler),
 );
 
--- Payment related tables
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.MedioPago
 (
     id_medio_pago INT PRIMARY KEY IDENTITY(1,1),
     nombre NVARCHAR(100)
+);
+
+CREATE TABLE ANDY_Y_SUS_SEMINARAS.PagoAlquiler
+(
+    id_pago_alquiler INT PRIMARY KEY IDENTITY(1,1),
+    alquiler_id INT,
+    fecha_pago DATETIME,
+    nro_periodo_pago NUMERIC,
+    fecha_inicio_periodo DATETIME,
+    fecha_fin_periodo DATETIME,
+    importe NUMERIC,
+    medioPago_id INT,
+    descripcion_periodo NVARCHAR(100),
+    FOREIGN KEY (alquiler_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Alquiler(id_alquiler),
+    FOREIGN KEY (medioPago_id) REFERENCES ANDY_Y_SUS_SEMINARAS.MedioPago(id_medio_pago)
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.PagoVenta
