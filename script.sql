@@ -455,13 +455,13 @@ BEGIN
     AND AGENTE_FECHA_NAC IS NOT NULL;
 
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Agente (persona_id, sucursal_id)
-    SELECT id_persona, t.sucursal_id
-    FROM #TempAgente t
-    JOIN ANDY_Y_SUS_SEMINARAS.Sucursal s ON m.SUCURSAL_CODIGO = s.codigo_sucursal;
+    SELECT id_persona, sucursal_id
+    FROM #TempAgente;
 
     DROP TABLE #TempAgente;
 END
 GO
+
 
 
 CREATE PROCEDURE migrar_propietarios
