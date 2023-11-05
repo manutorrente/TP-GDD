@@ -455,8 +455,13 @@ BEGIN
     AND AGENTE_MAIL IS NOT NULL
     AND AGENTE_FECHA_NAC IS NOT NULL;
 
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Agente (persona_id)
-    SELECT id_persona FROM #TempAgente;
+    -- --la pk de sucursal es codigo_sucursal
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Agente (persona_id, sucursal_id)
+    SELECT a.id_persona, s.codigo_sucursal 
+    FROM #TempAgente a
+    JOIN Persona p ON p.id_persona = a.id_persona
+    JOIN gd_esquema.Maestra m ON m.AGENTE_DNI = p.dni AND m.AGENTE_MAIL = p.mail
+    JOIN ANDY_Y_SUS_SEMINARAS.Sucursal s ON s.codigo_sucursal = m.SUCURSAL_CODIGO;
 
     DROP TABLE #TempAgente;
 END
