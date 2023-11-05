@@ -221,13 +221,6 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Duracion
     FOREIGN KEY (tipo_periodo_id) REFERENCES ANDY_Y_SUS_SEMINARAS.TipoPeriodo(id_tipo_periodo)
 );
 
-CREATE TABLE ANDY_Y_SUS_SEMINARAS.DetalleImporte
-(
-    id_detalle_importe INT PRIMARY KEY IDENTITY(1,1),
-    nro_periodo_inicio NUMERIC,
-    nro_periodo_fin NUMERIC,
-    precio NUMERIC(18,2)
-);
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.EstadoAlquiler
 (
@@ -238,8 +231,7 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.EstadoAlquiler
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.Alquiler
 (
-    id_alquiler INT PRIMARY KEY IDENTITY(1,1),
-    codigo_alquiler INT,
+    id_alquiler INT PRIMARY KEY,
     anuncio_id INT,
     inquilino_id INT,
     duracion_id INT,
@@ -252,8 +244,17 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Alquiler
     estado_alquiler_id INT,
     FOREIGN KEY (anuncio_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Anuncio(nro_anuncio),
     FOREIGN KEY (inquilino_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Inquilino(id_inquilino),
-    FOREIGN KEY (detalle_importe_id) REFERENCES ANDY_Y_SUS_SEMINARAS.DetalleImporte(id_detalle_importe),
     FOREIGN KEY (estado_alquiler_id) REFERENCES ANDY_Y_SUS_SEMINARAS.EstadoAlquiler(id_estado_alquiler),
+);
+
+CREATE TABLE ANDY_Y_SUS_SEMINARAS.DetalleImporte
+(
+    id_detalle_importe INT PRIMARY KEY IDENTITY(1,1),
+    nro_periodo_inicio NUMERIC,
+    nro_periodo_fin NUMERIC,
+    precio NUMERIC(18,2),
+    alquiler_id INT,
+    FOREIGN KEY (alquiler_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Alquiler(id_alquiler)
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.MedioPago
@@ -307,7 +308,7 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Venta
 GO
 
 
-CREATE PROCEDURE migrar_tipificado
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_tipificado
     @TableName NVARCHAR(100),
     @SourceColumn NVARCHAR(100)
 AS
@@ -331,28 +332,28 @@ END
 GO
 
 
-CREATE PROCEDURE migrar_tipificados
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_tipificados
 AS
 BEGIN
 
-    EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.Disposicion', 'INMUEBLE_DISPOSICION'
-    EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.Orientacion', 'INMUEBLE_ORIENTACION'
-    EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.EstadoAlquiler', 'ALQUILER_ESTADO'
-    EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.EstadoAnuncio', 'ANUNCIO_ESTADO'
-    EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.TipoDeMoneda', 'PAGO_VENTA_MONEDA'
-    EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.TipoDeMoneda', 'VENTA_MONEDA'
-    EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.TipoDeMoneda', 'ANUNCIO_MONEDA'
-    EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.TipoOperacion', 'ANUNCIO_TIPO_OPERACION'
-    EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.TipoDeInmueble', 'INMUEBLE_TIPO_INMUEBLE'
-    EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.TipoPeriodo', 'ANUNCIO_TIPO_PERIODO'
-    EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.MedioPago', 'PAGO_ALQUILER_MEDIO_PAGO'
-    EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.MedioPago', 'PAGO_VENTA_MEDIO_PAGO'
-    EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.Estado', 'INMUEBLE_ESTADO'
-    EXEC migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.CantAmbientes', 'INMUEBLE_CANT_AMBIENTES'
+    EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.Disposicion', 'INMUEBLE_DISPOSICION'
+    EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.Orientacion', 'INMUEBLE_ORIENTACION'
+    EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.EstadoAlquiler', 'ALQUILER_ESTADO'
+    EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.EstadoAnuncio', 'ANUNCIO_ESTADO'
+    EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.TipoDeMoneda', 'PAGO_VENTA_MONEDA'
+    EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.TipoDeMoneda', 'VENTA_MONEDA'
+    EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.TipoDeMoneda', 'ANUNCIO_MONEDA'
+    EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.TipoOperacion', 'ANUNCIO_TIPO_OPERACION'
+    EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.TipoDeInmueble', 'INMUEBLE_TIPO_INMUEBLE'
+    EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.TipoPeriodo', 'ANUNCIO_TIPO_PERIODO'
+    EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.MedioPago', 'PAGO_ALQUILER_MEDIO_PAGO'
+    EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.MedioPago', 'PAGO_VENTA_MEDIO_PAGO'
+    EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.Estado', 'INMUEBLE_ESTADO'
+    EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.CantAmbientes', 'INMUEBLE_CANT_AMBIENTES'
 end
 go
 
-CREATE PROCEDURE migrar_carateristica
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_carateristica
 AS
 BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Caracteristica (nombre)
@@ -363,7 +364,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE migrar_carateristicas
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_carateristicas
 AS
 BEGIN
    INSERT INTO ANDY_Y_SUS_SEMINARAS.Caracteristica (nombre)
@@ -371,7 +372,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE migrar_caracteristica_inmueble
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_caracteristica_inmueble
 AS 
 BEGIN
     INSERT INTO  ANDY_Y_SUS_SEMINARAS.InmuebleCaracteristica (inmueble_id, caracteristica_id, valor)
@@ -413,7 +414,7 @@ END
 GO
 
 
-CREATE PROCEDURE migrar_inquilinos 
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_inquilinos 
 AS
 BEGIN
     CREATE TABLE #TempInquilino (id_persona INT);
@@ -437,15 +438,15 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE migrar_agentes
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_agentes
 AS
 BEGIN
-    CREATE TABLE #TempAgente (id_persona INT, sucursal_id NUMERIC);
+    CREATE TABLE #TempAgente (id_persona INT);
 
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
-    OUTPUT inserted.id_persona, NULL INTO #TempAgente (id_persona, sucursal_id)
+    OUTPUT inserted.id_persona INTO #TempAgente (id_persona)
     SELECT DISTINCT AGENTE_NOMBRE, AGENTE_APELLIDO, AGENTE_DNI, AGENTE_FECHA_REGISTRO, AGENTE_TELEFONO, AGENTE_MAIL, AGENTE_FECHA_NAC
-    FROM gd_esquema.Maestra m
+    FROM gd_esquema.Maestra
     WHERE AGENTE_NOMBRE IS NOT NULL
     AND AGENTE_APELLIDO IS NOT NULL
     AND AGENTE_DNI IS NOT NULL
@@ -454,17 +455,17 @@ BEGIN
     AND AGENTE_MAIL IS NOT NULL
     AND AGENTE_FECHA_NAC IS NOT NULL;
 
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Agente (persona_id, sucursal_id)
-    SELECT id_persona, t.sucursal_id
-    FROM #TempAgente t
-    JOIN ANDY_Y_SUS_SEMINARAS.Sucursal s ON m.SUCURSAL_CODIGO = s.codigo_sucursal;
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Agente (persona_id)
+    SELECT id_persona FROM #TempAgente;
 
     DROP TABLE #TempAgente;
 END
 GO
 
 
-CREATE PROCEDURE migrar_propietarios
+
+
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_propietarios
 AS
 BEGIN
     CREATE TABLE #TempPropietario (id_persona INT);
@@ -488,7 +489,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE migrar_compradores
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_compradores
 AS
 BEGIN
     CREATE TABLE #TempComprador (id_persona INT);
@@ -512,7 +513,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE migrar_provincias
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_provincias
 AS
 BEGIN
     INSERT into ANDY_Y_SUS_SEMINARAS.Provincia
@@ -527,7 +528,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE migrar_localidad
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_localidad
 AS
 BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Localidad
@@ -550,7 +551,7 @@ GO
 
 
 
-CREATE PROCEDURE migrar_barrios
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_barrios
 AS
 BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Barrio
@@ -565,7 +566,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE migrar_direccion
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_direccion
 AS
 BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Direccion
@@ -587,7 +588,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE migrar_inmueble
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_inmueble
 AS
 BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Inmueble (nro_inmueble,tipo_de_inmueble_id, descripcion, direccion_id, cantAmbientes_id, superficie_total, disposicion_id, orientacion_id, estado_id, antiguedad, expensas)
@@ -614,7 +615,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE migrar_sucursal
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_sucursal
 AS
 BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Sucursal (codigo_sucursal, direccion_id, nombre, telefono)
@@ -628,7 +629,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE migrar_anuncio
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_anuncio
 AS
 BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Anuncio (nro_anuncio, fecha_publicacion, tipo_operacion_id, agente_id, inmueble_id, precio_publicado, moneda_id, tipo_periodo_id, estado_anuncio_id, fecha_finalizacion, costo_publicacion)
@@ -655,7 +656,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE migrar_propietario_inmueble
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_propietario_inmueble
 AS
 BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.PropietarioDeInmueble (propietario_id, inmueble_id)
@@ -669,29 +670,17 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE migrar_detalle_importe
-AS
-BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.DetalleImporte (nro_periodo_inicio, nro_periodo_fin, precio)
-    SELECT DISTINCT
-        DETALLE_ALQ_NRO_PERIODO_INI,
-        DETALLE_ALQ_NRO_PERIODO_FIN,
-        DETALLE_ALQ_PRECIO
-    FROM gd_esquema.Maestra em
-END
-GO
 
-CREATE PROCEDURE migrar_alquiler
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_alquiler
 AS
 BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Alquiler (codigo_alquiler, fecha_inicio, fecha_fin, inquilino_id, estado_alquiler_id, detalle_importe_id, duracion_id, deposito, comision, gastos_averiguaciones, anuncio_id)
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Alquiler (id_alquiler, fecha_inicio, fecha_fin, inquilino_id, estado_alquiler_id, duracion_id, deposito, comision, gastos_averiguaciones, anuncio_id)
     SELECT DISTINCT
         em.ALQUILER_CODIGO,
         em.ALQUILER_FECHA_INICIO,
         em.ALQUILER_FECHA_FIN,
         inq.id_inquilino,
         e.id_estado_alquiler,
-        d.id_detalle_importe,
         em.ALQUILER_CANT_PERIODOS,
         em.ALQUILER_DEPOSITO,
         em.ALQUILER_COMISION,
@@ -702,11 +691,31 @@ BEGIN
     JOIN ANDY_Y_SUS_SEMINARAS.Inquilino inq ON inq.persona_id =  p.id_persona
     JOIN ANDY_Y_SUS_SEMINARAS.TipoPeriodo t ON em.ANUNCIO_TIPO_PERIODO = t.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.EstadoAlquiler e ON em.ALQUILER_ESTADO = e.nombre
-    LEFT JOIN ANDY_Y_SUS_SEMINARAS.DetalleImporte d ON em.DETALLE_ALQ_NRO_PERIODO_INI = d.nro_periodo_inicio AND em.DETALLE_ALQ_NRO_PERIODO_FIN = d.nro_periodo_fin AND em.DETALLE_ALQ_PRECIO = d.precio
     JOIN ANDY_Y_SUS_SEMINARAS.Anuncio a ON em.ANUNCIO_CODIGO = a.nro_anuncio
 END
 GO
-CREATE PROCEDURE migrar_pago_alquiler
+
+
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_detalle_importe
+AS
+BEGIN
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.DetalleImporte (nro_periodo_inicio, nro_periodo_fin, precio, alquiler_id)
+    SELECT DISTINCT
+        DETALLE_ALQ_NRO_PERIODO_INI,
+        DETALLE_ALQ_NRO_PERIODO_FIN,
+        DETALLE_ALQ_PRECIO,
+        alq.id_alquiler
+    FROM gd_esquema.Maestra em
+    JOIN ANDY_Y_SUS_SEMINARAS.Alquiler alq ON em.ALQUILER_CODIGO = alq.id_alquiler
+    WHERE DETALLE_ALQ_NRO_PERIODO_INI IS NOT NULL
+    AND DETALLE_ALQ_NRO_PERIODO_FIN IS NOT NULL
+END
+GO
+
+
+
+
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_pago_alquiler
 AS
 BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.PagoAlquiler (id_pago_alquiler, alquiler_id, fecha_pago, nro_periodo_pago, descripcion_periodo, fecha_inicio_periodo, fecha_fin_periodo, importe, medioPago_id)
@@ -721,15 +730,13 @@ BEGIN
         PAGO_ALQUILER_IMPORTE,
         mp.id_medio_pago
     FROM gd_esquema.Maestra m
-    JOIN ANDY_Y_SUS_SEMINARAS.Alquiler a ON m.ALQUILER_CODIGO = a.codigo_alquiler 
-	JOIN ANDY_Y_SUS_SEMINARAS.DetalleImporte di ON a.detalle_importe_id = di.id_detalle_importe
+    JOIN ANDY_Y_SUS_SEMINARAS.Alquiler a ON m.ALQUILER_CODIGO = a.id_alquiler 
     JOIN ANDY_Y_SUS_SEMINARAS.MedioPago mp ON m.PAGO_ALQUILER_MEDIO_PAGO = mp.nombre 
-	WHERE PAGO_ALQUILER_NRO_PERIODO BETWEEN di.nro_periodo_inicio AND di.nro_periodo_fin
 END
 GO
 
 
-CREATE PROCEDURE migrar_pago_venta
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_pago_venta
 AS
 BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.PagoVenta (importe, cotizacion, medio_de_pago_id, moneda_del_pago_id)
@@ -746,7 +753,7 @@ END
 GO
 
 
-CREATE PROCEDURE migrar_venta
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_venta
 AS
 BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.Venta (id_venta, anuncio_id, comprador_id, fecha_venta, precio_venta, moneda_id, pago_venta_id, comision)
@@ -774,33 +781,33 @@ END
 GO
 
 
-EXEC migrar_provincias;
-EXEC migrar_localidad;
-EXEC migrar_barrios;
-EXEC migrar_direccion;
-EXEC migrar_sucursal;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_provincias;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_localidad;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_barrios;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_direccion;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_sucursal;
 
-EXEC migrar_tipificados;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificados;
 
-EXEC migrar_carateristicas;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_carateristicas;
 
-EXEC migrar_inquilinos;
-EXEC migrar_agentes;
-EXEC migrar_propietarios;
-EXEC migrar_compradores;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_inquilinos;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_agentes;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_propietarios;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_compradores;
 
-EXEC migrar_inmueble;
-EXEC migrar_caracteristica_inmueble;
-EXEC migrar_propietario_inmueble;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_inmueble;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_caracteristica_inmueble;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_propietario_inmueble;
 
-EXEC migrar_anuncio;
-EXEC migrar_detalle_importe;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_anuncio;
 
-EXEC migrar_alquiler;
-EXEC migrar_pago_alquiler;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_alquiler;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_detalle_importe;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_pago_alquiler;
 
-EXEC migrar_pago_venta;
-EXEC migrar_venta;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_pago_venta;
+EXEC ANDY_Y_SUS_SEMINARAS.migrar_venta;
 
 
 -- DROP TABLE ANDY_Y_SUS_SEMINARAS.PagoAlquiler;
@@ -839,27 +846,27 @@ EXEC migrar_venta;
 -- DROP TABLE ANDY_Y_SUS_SEMINARAS.Sucursal;
 
 
--- DROP PROCEDURE migrar_tipificado;
--- DROP PROCEDURE migrar_tipificados;
--- DROP PROCEDURE migrar_carateristica;
--- DROP PROCEDURE migrar_inquilinos;
--- DROP PROCEDURE migrar_agentes;
--- DROP PROCEDURE migrar_propietarios;
--- DROP PROCEDURE migrar_compradores;
--- DROP PROCEDURE migrar_provincias;
--- DROP PROCEDURE migrar_localidad;
--- DROP PROCEDURE migrar_barrios;
--- DROP PROCEDURE migrar_direccion;
--- DROP PROCEDURE migrar_inmueble;
--- DROP PROCEDURE migrar_sucursal;
--- DROP PROCEDURE migrar_anuncio;
--- DROP PROCEDURE migrar_propietario_inmueble;
--- DROP PROCEDURE migrar_tipo_periodo;
--- DROP PROCEDURE migrar_duracion;
--- DROP PROCEDURE migrar_pago_venta;
--- DROP PROCEDURE migrar_detalle_importe;
--- DROP PROCEDURE migrar_alquiler;
--- DROP PROCEDURE migrar_pago_alquiler;
--- DROP PROCEDURE migrar_venta;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_tipificado;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_tipificados;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_carateristica;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_inquilinos;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_agentes;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_propietarios;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_compradores;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_provincias;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_localidad;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_barrios;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_direccion;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_inmueble;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_sucursal;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_anuncio;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_propietario_inmueble;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_tipo_periodo;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_duracion;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_pago_venta;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_detalle_importe;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_alquiler;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_pago_alquiler;
+-- DROP PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_venta;
 
 -- DROP SCHEMA ANDY_Y_SUS_SEMINARAS;

@@ -9,7 +9,6 @@ entity alquiler {
     duracion: numeric(18, 2)
     fechaInicio: DateTime
     fechaFin: DateTime
-    detalleImporte: DetalleImporte FK
     deposito: numeric (18, 2)
     comision: numeric (18, 2)
     gastosAveriguaciones: numeric (18, 2)
@@ -19,6 +18,7 @@ entity alquiler {
 
 entity detalleImporte {
     idDetalleImporte: numeric
+    alquiler_id : Alquiler FK
     nroPeriodoInicio: numeric
     nroPeriodoFin: numeric
     precio: numeric
@@ -258,7 +258,7 @@ caracteristica |o--|{ inmuebleCaracteristica
 
 
 ' Alquiler
-detalleImporte }|--||alquiler 
+detalleImporte ||--|{alquiler
 alquiler ||-|{ pagoAlquiler
 estadoAlquiler }|--|| alquiler
 alquiler |o--|| anuncio
