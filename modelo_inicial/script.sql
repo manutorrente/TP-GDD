@@ -274,6 +274,7 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.PagoAlquiler
     importe NUMERIC,
     medioPago_id INT,
     descripcion_periodo NVARCHAR(100),
+    fecha_vencimiento DATETIME,
     FOREIGN KEY (alquiler_id) REFERENCES ANDY_Y_SUS_SEMINARAS.Alquiler(id_alquiler),
     FOREIGN KEY (medioPago_id) REFERENCES ANDY_Y_SUS_SEMINARAS.MedioPago(id_medio_pago)
 );
@@ -350,19 +351,9 @@ BEGIN
     EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.MedioPago', 'PAGO_VENTA_MEDIO_PAGO'
     EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.Estado', 'INMUEBLE_ESTADO'
     EXEC ANDY_Y_SUS_SEMINARAS.migrar_tipificado 'ANDY_Y_SUS_SEMINARAS.CantAmbientes', 'INMUEBLE_CANT_AMBIENTES'
-end
-go
-
-CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_carateristica
-AS
-BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Caracteristica (nombre)
-    VALUES ('WIFI'),
-           ('CABLE'),
-           ('CALEFACCION'),
-           ('GAS')
 END
-GO
+GO 
+
 
 CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_carateristicas
 AS
@@ -411,111 +402,6 @@ BEGIN
     JOIN ANDY_Y_SUS_SEMINARAS.Inmueble AS i ON m.INMUEBLE_CODIGO = i.nro_inmueble
     JOIN ANDY_Y_SUS_SEMINARAS.Caracteristica AS c ON c.nombre = 'wifi';
 END 
-GO
-
-
-CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_inquilinos 
-AS
-BEGIN
-    CREATE TABLE #TempInquilino (id_persona INT);
-
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
-    OUTPUT inserted.id_persona INTO #TempInquilino (id_persona)
-    SELECT DISTINCT INQUILINO_NOMBRE, INQUILINO_APELLIDO, INQUILINO_DNI, INQUILINO_FECHA_REGISTRO, INQUILINO_TELEFONO, INQUILINO_MAIL, INQUILINO_FECHA_NAC
-    FROM gd_esquema.Maestra 
-    WHERE INQUILINO_NOMBRE IS NOT NULL
-    AND INQUILINO_APELLIDO IS NOT NULL
-    AND INQUILINO_DNI IS NOT NULL
-    AND INQUILINO_FECHA_REGISTRO IS NOT NULL
-    AND INQUILINO_TELEFONO IS NOT NULL
-    AND INQUILINO_MAIL IS NOT NULL
-    AND INQUILINO_FECHA_NAC IS NOT NULL; 
-
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Inquilino (persona_id)
-    SELECT id_persona FROM #TempInquilino;
-
-    DROP TABLE #TempInquilino;
-END
-GO
-
-CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_agentes
-AS
-BEGIN
-    CREATE TABLE #TempAgente (id_persona INT);
-
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
-    OUTPUT inserted.id_persona INTO #TempAgente (id_persona)
-    SELECT DISTINCT AGENTE_NOMBRE, AGENTE_APELLIDO, AGENTE_DNI, AGENTE_FECHA_REGISTRO, AGENTE_TELEFONO, AGENTE_MAIL, AGENTE_FECHA_NAC
-    FROM gd_esquema.Maestra
-    WHERE AGENTE_NOMBRE IS NOT NULL
-    AND AGENTE_APELLIDO IS NOT NULL
-    AND AGENTE_DNI IS NOT NULL
-    AND AGENTE_FECHA_REGISTRO IS NOT NULL
-    AND AGENTE_TELEFONO IS NOT NULL
-    AND AGENTE_MAIL IS NOT NULL
-    AND AGENTE_FECHA_NAC IS NOT NULL;
-
-    -- --la pk de sucursal es codigo_sucursal
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Agente (persona_id, sucursal_id)
-    SELECT a.id_persona, s.codigo_sucursal 
-    FROM #TempAgente a
-    JOIN Persona p ON p.id_persona = a.id_persona
-    JOIN gd_esquema.Maestra m ON m.AGENTE_DNI = p.dni AND m.AGENTE_MAIL = p.mail
-    JOIN ANDY_Y_SUS_SEMINARAS.Sucursal s ON s.codigo_sucursal = m.SUCURSAL_CODIGO;
-
-    DROP TABLE #TempAgente;
-END
-GO
-
-
-
-
-CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_propietarios
-AS
-BEGIN
-    CREATE TABLE #TempPropietario (id_persona INT);
-
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
-    OUTPUT inserted.id_persona INTO #TempPropietario (id_persona)
-    SELECT DISTINCT PROPIETARIO_NOMBRE, PROPIETARIO_APELLIDO, PROPIETARIO_DNI, PROPIETARIO_FECHA_REGISTRO, PROPIETARIO_TELEFONO, PROPIETARIO_MAIL, PROPIETARIO_FECHA_NAC
-    FROM gd_esquema.Maestra
-    WHERE PROPIETARIO_NOMBRE IS NOT NULL
-    AND PROPIETARIO_APELLIDO IS NOT NULL
-    AND PROPIETARIO_DNI IS NOT NULL
-    AND PROPIETARIO_FECHA_REGISTRO IS NOT NULL
-    AND PROPIETARIO_TELEFONO IS NOT NULL
-    AND PROPIETARIO_MAIL IS NOT NULL
-    AND PROPIETARIO_FECHA_NAC IS NOT NULL;
-
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Propietario (persona_id)
-    SELECT id_persona FROM #TempPropietario;
-
-    DROP TABLE #TempPropietario;
-END
-GO
-
-CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_compradores
-AS
-BEGIN
-    CREATE TABLE #TempComprador (id_persona INT);
-
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
-    OUTPUT inserted.id_persona INTO #TempComprador (id_persona)
-    SELECT DISTINCT COMPRADOR_NOMBRE, COMPRADOR_APELLIDO, COMPRADOR_DNI, COMPRADOR_FECHA_REGISTRO, COMPRADOR_TELEFONO, COMPRADOR_MAIL, COMPRADOR_FECHA_NAC
-    FROM gd_esquema.Maestra 
-    WHERE COMPRADOR_NOMBRE IS NOT NULL
-    AND COMPRADOR_APELLIDO IS NOT NULL
-    AND COMPRADOR_DNI IS NOT NULL
-    AND COMPRADOR_FECHA_REGISTRO IS NOT NULL
-    AND COMPRADOR_TELEFONO IS NOT NULL
-    AND COMPRADOR_MAIL IS NOT NULL
-    AND COMPRADOR_FECHA_NAC IS NOT NULL;
-
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Comprador (persona_id)
-    SELECT id_persona FROM #TempComprador;
-
-    DROP TABLE #TempComprador;
-END
 GO
 
 CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_provincias
@@ -593,6 +479,112 @@ BEGIN
 END
 GO
 
+
+
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_sucursal
+AS
+BEGIN
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Sucursal (codigo_sucursal, direccion_id, nombre, telefono)
+    SELECT DISTINCT
+        SUCURSAL_CODIGO,
+        d.id_direccion,
+        SUCURSAL_NOMBRE,
+        SUCURSAL_TELEFONO
+    FROM gd_esquema.Maestra m
+    JOIN ANDY_Y_SUS_SEMINARAS.Direccion d ON m.SUCURSAL_DIRECCION = d.calle AND d.barrio_id IS NULL
+END
+GO
+
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_inquilinos 
+AS
+BEGIN
+    CREATE TABLE #TempInquilino (id_persona INT);
+
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
+    OUTPUT inserted.id_persona INTO #TempInquilino (id_persona)
+    SELECT DISTINCT INQUILINO_NOMBRE, INQUILINO_APELLIDO, INQUILINO_DNI, INQUILINO_FECHA_REGISTRO, INQUILINO_TELEFONO, INQUILINO_MAIL, INQUILINO_FECHA_NAC
+    FROM gd_esquema.Maestra 
+    WHERE INQUILINO_NOMBRE IS NOT NULL
+    AND INQUILINO_APELLIDO IS NOT NULL
+    AND INQUILINO_DNI IS NOT NULL
+    AND INQUILINO_FECHA_REGISTRO IS NOT NULL
+    AND INQUILINO_TELEFONO IS NOT NULL
+    AND INQUILINO_MAIL IS NOT NULL
+    AND INQUILINO_FECHA_NAC IS NOT NULL; 
+
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Inquilino (persona_id)
+    SELECT id_persona FROM #TempInquilino;
+
+    DROP TABLE #TempInquilino;
+END
+GO
+
+
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_agentes
+AS
+BEGIN 
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
+    SELECT DISTINCT AGENTE_NOMBRE, AGENTE_APELLIDO, AGENTE_DNI, AGENTE_FECHA_REGISTRO, AGENTE_TELEFONO, AGENTE_MAIL, AGENTE_FECHA_NAC
+    FROM gd_esquema.Maestra
+    WHERE AGENTE_NOMBRE IS NOT NULL
+
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Agente (persona_id, sucursal_id)
+    SELECT DISTINCT p.id_persona, SUCURSAL_CODIGO
+    FROM gd_esquema.Maestra m 
+    JOIN ANDY_Y_SUS_SEMINARAS.Persona p ON m.AGENTE_DNI = p.dni AND m.AGENTE_MAIL = p.mail
+END
+GO
+
+
+
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_propietarios
+AS
+BEGIN
+    CREATE TABLE #TempPropietario (id_persona INT);
+
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
+    OUTPUT inserted.id_persona INTO #TempPropietario (id_persona)
+    SELECT DISTINCT PROPIETARIO_NOMBRE, PROPIETARIO_APELLIDO, PROPIETARIO_DNI, PROPIETARIO_FECHA_REGISTRO, PROPIETARIO_TELEFONO, PROPIETARIO_MAIL, PROPIETARIO_FECHA_NAC
+    FROM gd_esquema.Maestra
+    WHERE PROPIETARIO_NOMBRE IS NOT NULL
+    AND PROPIETARIO_APELLIDO IS NOT NULL
+    AND PROPIETARIO_DNI IS NOT NULL
+    AND PROPIETARIO_FECHA_REGISTRO IS NOT NULL
+    AND PROPIETARIO_TELEFONO IS NOT NULL
+    AND PROPIETARIO_MAIL IS NOT NULL
+    AND PROPIETARIO_FECHA_NAC IS NOT NULL;
+
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Propietario (persona_id)
+    SELECT id_persona FROM #TempPropietario;
+
+    DROP TABLE #TempPropietario;
+END
+GO
+
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_compradores
+AS
+BEGIN
+    CREATE TABLE #TempComprador (id_persona INT);
+
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Persona (nombre, apellido, dni, fecha_registro, telefono, mail, fecha_nacimiento)
+    OUTPUT inserted.id_persona INTO #TempComprador (id_persona)
+    SELECT DISTINCT COMPRADOR_NOMBRE, COMPRADOR_APELLIDO, COMPRADOR_DNI, COMPRADOR_FECHA_REGISTRO, COMPRADOR_TELEFONO, COMPRADOR_MAIL, COMPRADOR_FECHA_NAC
+    FROM gd_esquema.Maestra 
+    WHERE COMPRADOR_NOMBRE IS NOT NULL
+    AND COMPRADOR_APELLIDO IS NOT NULL
+    AND COMPRADOR_DNI IS NOT NULL
+    AND COMPRADOR_FECHA_REGISTRO IS NOT NULL
+    AND COMPRADOR_TELEFONO IS NOT NULL
+    AND COMPRADOR_MAIL IS NOT NULL
+    AND COMPRADOR_FECHA_NAC IS NOT NULL;
+
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Comprador (persona_id)
+    SELECT id_persona FROM #TempComprador;
+
+    DROP TABLE #TempComprador;
+END
+GO
+
 CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_inmueble
 AS
 BEGIN
@@ -617,20 +609,6 @@ BEGIN
     JOIN ANDY_Y_SUS_SEMINARAS.Disposicion dis ON m.INMUEBLE_DISPOSICION = dis.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.Orientacion ori ON m.INMUEBLE_ORIENTACION = ori.nombre
     JOIN ANDY_Y_SUS_SEMINARAS.Estado e ON m.INMUEBLE_ESTADO = e.nombre
-END
-GO
-
-CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_sucursal
-AS
-BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Sucursal (codigo_sucursal, direccion_id, nombre, telefono)
-    SELECT DISTINCT
-        SUCURSAL_CODIGO,
-        d.id_direccion,
-        SUCURSAL_NOMBRE,
-        SUCURSAL_TELEFONO
-    FROM gd_esquema.Maestra m
-    JOIN ANDY_Y_SUS_SEMINARAS.Direccion d ON m.SUCURSAL_DIRECCION = d.calle AND d.barrio_id IS NULL
 END
 GO
 
@@ -723,7 +701,7 @@ GO
 CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_pago_alquiler
 AS
 BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.PagoAlquiler (id_pago_alquiler, alquiler_id, fecha_pago, nro_periodo_pago, descripcion_periodo, fecha_inicio_periodo, fecha_fin_periodo, importe, medioPago_id)
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.PagoAlquiler (id_pago_alquiler, alquiler_id, fecha_pago, nro_periodo_pago, descripcion_periodo, fecha_inicio_periodo, fecha_fin_periodo, importe, medioPago_id, fecha_vencimiento)
     SELECT DISTINCT
         PAGO_ALQUILER_CODIGO,
         a.id_alquiler,
@@ -733,7 +711,8 @@ BEGIN
         PAGO_ALQUILER_FEC_INI,
         PAGO_ALQUILER_FEC_FIN,
         PAGO_ALQUILER_IMPORTE,
-        mp.id_medio_pago
+        mp.id_medio_pago,
+        PAGO_ALQUILER_FECHA_VENCIMIENTO
     FROM gd_esquema.Maestra m
     JOIN ANDY_Y_SUS_SEMINARAS.Alquiler a ON m.ALQUILER_CODIGO = a.id_alquiler 
     JOIN ANDY_Y_SUS_SEMINARAS.MedioPago mp ON m.PAGO_ALQUILER_MEDIO_PAGO = mp.nombre 

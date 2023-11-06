@@ -14,9 +14,8 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.BI_dim_ubicacion (
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.BI_dim_sucursal (
-    id_sucursal numeric PRIMARY KEY IDENTITY(1,1),
     nombre nvarchar(100),
-    codigo_sucursal numeric
+    codigo_sucursal numeric PRIMARY KEY
 );
 
 CREATE TABLE ANDY_Y_SUS_SEMINARAS.BI_dim_rango_etario (
@@ -70,7 +69,7 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.BI_hecho_anuncio (
     monto_total_operaciones_concretadas numeric,
     FOREIGN KEY (tiempo) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo(id_tiempo),
     FOREIGN KEY (ubicacion) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_ubicacion(id_ubicacion),
-    FOREIGN KEY (sucursal) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_sucursal(id_sucursal),
+    FOREIGN KEY (sucursal) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_sucursal(codigo_sucursal),
     FOREIGN KEY (rango_etario_agentes) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_rango_etario(id_rango_etario),
     FOREIGN KEY (tipo_inmueble) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_inmueble(id_tipo_inmueble),
     FOREIGN KEY (ambientes) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_ambientes(id_ambientes),
@@ -93,9 +92,11 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.BI_hecho_alquiler (
     cant_alquileres numeric,
     porcentaje_incumplimiento_pagos numeric,
     promedio_comision numeric,
+    cantPagos numeric,
+    promedioPorcentajeAumento numeric,
     FOREIGN KEY (tiempo) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo(id_tiempo),
     FOREIGN KEY (ubicacion) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_ubicacion(id_ubicacion),
-    FOREIGN KEY (sucursal) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_sucursal(id_sucursal),
+    FOREIGN KEY (sucursal) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_sucursal(codigo_sucursal),
     FOREIGN KEY (rango_etario_inquilinos) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_rango_etario(id_rango_etario),
     FOREIGN KEY (rango_etario_agentes) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_rango_etario(id_rango_etario),
     FOREIGN KEY (tipo_inmueble) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_inmueble(id_tipo_inmueble),
@@ -120,7 +121,7 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.BI_hecho_venta (
     promedio_comision numeric,
     FOREIGN KEY (tiempo) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo(id_tiempo),
     FOREIGN KEY (ubicacion) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_ubicacion(id_ubicacion),
-    FOREIGN KEY (sucursal) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_sucursal(id_sucursal),
+    FOREIGN KEY (sucursal) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_sucursal(codigo_sucursal),
     FOREIGN KEY (rango_etario_agentes) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_rango_etario(id_rango_etario),
     FOREIGN KEY (rango_etario_compradores) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_rango_etario(id_rango_etario),
     FOREIGN KEY (tipo_inmueble) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_inmueble(id_tipo_inmueble),
@@ -170,7 +171,7 @@ GO
 CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.BI_MigracionTiempo
 AS
 BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo (anio, cuatrimestre, mes)
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo (anio, mes, cuatrimestre)
     SELECT DISTINCT YEAR(fecha_publicacion), MONTH(fecha_publicacion), ANDY_Y_SUS_SEMINARAS.CUATRIMESTRE(fecha_publicacion) FROM ANDY_Y_SUS_SEMINARAS.Anuncio
     UNION 
     SELECT DISTINCT YEAR(fecha_finalizacion), MONTH(fecha_finalizacion), ANDY_Y_SUS_SEMINARAS.CUATRIMESTRE(fecha_finalizacion) FROM ANDY_Y_SUS_SEMINARAS.Anuncio
@@ -322,64 +323,82 @@ CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.BI_MigracionHechoAnuncio
 AS
 BEGIN
     INSERT INTO ANDY_Y_SUS_SEMINARAS.BI_hecho_anuncio (tiempo, ubicacion, sucursal, rango_etario_agentes, tipo_inmueble, ambientes, rango_m2, tipo_operacion, tipo_moneda, promedio_tiempo_publicado, precio_promedio, cant_anuncios, cant_operaciones_concretadas, monto_total_operaciones_concretadas)
-    SELECT DISTINCT
-        -- Dimensiones
+    SELECT 
+    t.id_tiempo,
+    u.id_ubicacion,
+    sucursal.codigo_sucursal,
+    ANDY_Y_SUS_SEMINARAS.ObtenerRangoEtarioID(persona.fecha_nacimiento),
+    tipoInm.id_tipo_inmueble,
+    inmueble.cantAmbientes_id,
+    ANDY_Y_SUS_SEMINARAS.ObtenerRangoM2ID(inmueble.superficie_total),
+    tipoOp.id_tipo_operacion,
+    tipoMoneda.id_tipo_moneda,
+    AVG(DATEDIFF(DAY, a.fecha_publicacion, a.fecha_finalizacion)) AS promedioTiempoPublicado,
+    AVG(a.precio_publicado) AS precioPromedio,
+    COUNT(*) AS cantAnuncios,
+    SUM(CASE WHEN alq.id_alquiler IS NOT NULL OR v.id_venta IS NOT NULL THEN 1 ELSE 0 END) AS cantOperacionesConcretadas,
+    SUM(CASE WHEN alq.id_alquiler IS NOT NULL OR v.id_venta IS NOT NULL THEN a.precio_publicado ELSE 0 END) AS montoTotalOperacionesConcretadas
+    FROM 
+        ANDY_Y_SUS_SEMINARAS.Anuncio a
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.Agente ag ON ag.id_agente = a.agente_id
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.Sucursal s ON s.codigo_sucursal = ag.sucursal_id
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.BI_dim_sucursal sucursal ON s.codigo_sucursal = sucursal.codigo_sucursal
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_operacion tipoOp ON a.tipo_operacion_id = tipoOp.id_tipo_operacion
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.TipoDeMoneda tm ON a.moneda_id = tm.id_moneda
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_moneda tipoMoneda ON tm.nombre = tipoMoneda.nombre
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.Persona persona ON ag.persona_id = persona.id_persona
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.Inmueble inmueble ON a.inmueble_id = inmueble.nro_inmueble
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.TipoDeInmueble ti ON inmueble.tipo_de_inmueble_id = ti.id_tipo_de_inmueble
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_inmueble tipoInm ON ti.id_tipo_de_inmueble = tipoInm.id_tipo_inmueble
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.Direccion direccion ON inmueble.direccion_id = direccion.id_direccion
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.Barrio barrio ON direccion.barrio_id = barrio.id_barrio
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.Localidad localidad ON barrio.localidad_id = localidad.id_localidad
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.Provincia provincia ON localidad.provincia_id = provincia.id_provincia
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.BI_dim_ubicacion u ON provincia.nombre = u.provincia 
+            AND localidad.nombre = u.localidad 
+            AND barrio.nombre = u.barrio
+    LEFT JOIN 
+        ANDY_Y_SUS_SEMINARAS.Venta v ON a.nro_anuncio = v.anuncio_id
+    LEFT JOIN 
+        ANDY_Y_SUS_SEMINARAS.Alquiler alq ON alq.anuncio_id = a.nro_anuncio
+    JOIN 
+        ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo t ON YEAR(a.fecha_publicacion) = t.anio 
+            AND MONTH(a.fecha_publicacion) = t.mes
+    WHERE 
+        a.fecha_publicacion IS NOT NULL
+    GROUP BY
         t.id_tiempo,
         u.id_ubicacion,
-        s.codigo_sucursal,
+        sucursal.codigo_sucursal,
         ANDY_Y_SUS_SEMINARAS.ObtenerRangoEtarioID(persona.fecha_nacimiento),
         tipoInm.id_tipo_inmueble,
         inmueble.cantAmbientes_id,
         ANDY_Y_SUS_SEMINARAS.ObtenerRangoM2ID(inmueble.superficie_total),
         tipoOp.id_tipo_operacion,
-        tm.id_moneda,
-        -- Medidas
-        AVG(DATEDIFF(DAY, a.fecha_publicacion, a.fecha_finalizacion)) AS promedioTiempoPublicado,
-        AVG(a.precio_publicado) AS precioPromedio,
-        COUNT(*) AS cantAnuncios,
-        SUM(CASE WHEN a.fecha_finalizacion IS NOT NULL THEN 1 ELSE 0 END) AS cantOperacionesConcretadas,
-        SUM(CASE WHEN a.fecha_finalizacion IS NOT NULL THEN a.precio_publicado ELSE 0 END) AS montoTotalOperacionesConcretadas
-        FROM ANDY_Y_SUS_SEMINARAS.Anuncio a
-        JOIN ANDY_Y_SUS_SEMINARAS.Agente ag ON ag.id_agente = a.agente_id
-        JOIN ANDY_Y_SUS_SEMINARAS.Sucursal s ON s.codigo_sucursal = ag.sucursal_id
-        JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_operacion tipoOp ON a.tipo_operacion_id = tipoOp.id_tipo_operacion
-        JOIN ANDY_Y_SUS_SEMINARAS.TipoDeMoneda tm ON a.moneda_id = tm.id_moneda
-        JOIN ANDY_Y_SUS_SEMINARAS.Persona persona ON ag.persona_id = persona.id_persona
-        JOIN ANDY_Y_SUS_SEMINARAS.Inmueble inmueble ON a.inmueble_id = inmueble.nro_inmueble
-        JOIN ANDY_Y_SUS_SEMINARAS.TipoDeInmueble ti ON inmueble.tipo_de_inmueble_id = ti.id_tipo_de_inmueble
-        JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_inmueble tipoInm ON ti.id_tipo_de_inmueble = tipoInm.id_tipo_inmueble
-        JOIN ANDY_Y_SUS_SEMINARAS.Direccion direccion ON inmueble.direccion_id = direccion.id_direccion
-        JOIN ANDY_Y_SUS_SEMINARAS.Barrio barrio ON direccion.barrio_id = barrio.id_barrio
-        JOIN ANDY_Y_SUS_SEMINARAS.Localidad localidad ON barrio.localidad_id = localidad.id_localidad
-        JOIN ANDY_Y_SUS_SEMINARAS.Provincia provincia ON localidad.provincia_id = provincia.id_provincia
-        JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_ubicacion u ON provincia.nombre = u.provincia AND localidad.nombre = u.localidad AND barrio.nombre = u.barrio
-        JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo t ON YEAR(a.fecha_publicacion) = t.anio AND MONTH(a.fecha_publicacion) = t.mes
-        WHERE a.fecha_publicacion IS NOT NULL
-        GROUP BY
-            -- Dimensiones
-        t.id_tiempo,
-        u.id_ubicacion,
-        s.codigo_sucursal,
-        ANDY_Y_SUS_SEMINARAS.ObtenerRangoEtarioID(persona.fecha_nacimiento),
-        tipoInm.id_tipo_inmueble,
-        inmueble.cantAmbientes_id,
-        ANDY_Y_SUS_SEMINARAS.ObtenerRangoM2ID(inmueble.superficie_total),
-        tipoOp.id_tipo_operacion,
-        tm.id_moneda
+        tipoMoneda.id_tipo_moneda;
 END
 GO
 
 
-EXEC ANDY_Y_SUS_SEMINARAS.BI_MigracionHechoAnuncio;
-
-
-SELECT * FROM ANDY_Y_SUS_SEMINARAS.BI_hecho_anuncio
-GO
-
 CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.BI_MigracionHechoAlquiler
 AS
 BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.BI_hecho_alquiler (tiempo, ubicacion, sucursal, rango_etario_inquilinos, rango_etario_agentes, tipo_inmueble, ambientes, rango_m2, tipo_moneda, cant_alquileres, porcentaje_incumplimiento_pagos, promedio_comision)
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.BI_hecho_alquiler (tiempo, ubicacion, sucursal, rango_etario_inquilinos, rango_etario_agentes, tipo_inmueble, ambientes, rango_m2, tipo_moneda, cant_alquileres, porcentaje_incumplimiento_pagos, promedio_comision, cantPagos)
     SELECT DISTINCT
         -- Dimensiones
         t.id_tiempo,
@@ -390,20 +409,23 @@ BEGIN
         tipoInm.id_tipo_inmueble,
         inmueble.cantAmbientes_id,
         ANDY_Y_SUS_SEMINARAS.ObtenerRangoM2ID(inmueble.superficie_total),
-        tm.id_moneda,
+        tipoMoneda.id_tipo_moneda,
         -- Medidas
-        COUNT(*) AS cantAlquileres,
-        SUM(CASE WHEN pa.fecha_pago IS NULL THEN 1 ELSE 0 END) / COUNT(*) AS porcentajeIncumplimientoPagos,
-        AVG(pa.comision) AS promedioComision
+        COUNT(DISTINCT a.id_alquiler) AS cantAlquileres,
+        SUM(CASE WHEN (DATEDIFF(DAY, pa.fecha_pago, pa.fecha_vencimiento) > 0) THEN 1 ELSE 0 END) / COUNT(*) * 100 AS porcentajeIncumplimientoPagos,
+        AVG(a.comision) AS promedioComision
+        COUNT(*) AS cantPagos,
+        --todo porcentaje de aumento
         FROM ANDY_Y_SUS_SEMINARAS.Alquiler a
         JOIN ANDY_Y_SUS_SEMINARAS.Anuncio anuncio ON a.anuncio_id = anuncio.nro_anuncio
-        JOIN ANDY_Y_SUS_SEMINARAS.Agente ag ON ag.id_agente = anuncio.agente
+        JOIN ANDY_Y_SUS_SEMINARAS.Agente ag ON ag.id_agente = anuncio.agente_id
         JOIN ANDY_Y_SUS_SEMINARAS.Sucursal s ON s.codigo_sucursal = ag.sucursal_id
-        JOIN ANDY_Y_SUS_SEMINARAS.TipoDeMoneda tm ON a.moneda_id = tm.id_moneda
-        JOIN ANDY_Y_SUS_SEMINARAS.Persona persona_agente ON ag.persona_id = persona.id_persona
+        JOIN ANDY_Y_SUS_SEMINARAS.TipoDeMoneda tm ON anuncio.moneda_id = tm.id_moneda
+        JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_moneda tipoMoneda ON tm.nombre = tipoMoneda.nombre
+        JOIN ANDY_Y_SUS_SEMINARAS.Persona persona_agente ON ag.persona_id = persona_agente.id_persona
         JOIN ANDY_Y_SUS_SEMINARAS.Inquilino inquilino ON a.inquilino_id = inquilino.id_inquilino
-        JOIN ANDY_Y_SUS_SEMINARAS.Persona persona_inquilino ON inquilino.persona_id = persona.id_persona
-        JOIN ANDY_Y_SUS_SEMINARAS.Inmueble inmueble ON a.inmueble_id = inmueble.nro_inmueble
+        JOIN ANDY_Y_SUS_SEMINARAS.Persona persona_inquilino ON inquilino.persona_id = persona_inquilino.id_persona
+        JOIN ANDY_Y_SUS_SEMINARAS.Inmueble inmueble ON anuncio.inmueble_id = inmueble.nro_inmueble
         JOIN ANDY_Y_SUS_SEMINARAS.TipoDeInmueble ti ON inmueble.tipo_de_inmueble_id = ti.id_tipo_de_inmueble
         JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_inmueble tipoInm ON ti.id_tipo_de_inmueble = tipoInm.id_tipo_inmueble
         JOIN ANDY_Y_SUS_SEMINARAS.Direccion direccion ON inmueble.direccion_id = direccion.id_direccion
@@ -415,7 +437,6 @@ BEGIN
         LEFT JOIN ANDY_Y_SUS_SEMINARAS.PagoAlquiler pa ON a.id_alquiler = pa.alquiler_id
         WHERE a.fecha_inicio IS NOT NULL
         GROUP BY
-            -- Dimensiones
         t.id_tiempo,
         u.id_ubicacion,
         s.codigo_sucursal,
@@ -424,46 +445,198 @@ BEGIN
         tipoInm.id_tipo_inmueble,
         inmueble.cantAmbientes_id,
         ANDY_Y_SUS_SEMINARAS.ObtenerRangoM2ID(inmueble.superficie_total),
-        tm.id_moneda
-        END
+        tipoMoneda.id_tipo_moneda
+END
+GO
 
 
+GO
+
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.BI_MigracionHechoVenta
+AS
+BEGIN
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.BI_hecho_venta (tiempo, ubicacion, sucursal, rango_etario_agentes, rango_etario_compradores, tipo_inmueble, ambientes, rango_m2, tipo_moneda, cant_ventas, precio_promedio_por_m2, promedio_comision)
+    SELECT DISTINCT
+        -- Dimensiones
+        t.id_tiempo,
+        u.id_ubicacion,
+        s.codigo_sucursal,
+        ANDY_Y_SUS_SEMINARAS.ObtenerRangoEtarioID(persona_agente.fecha_nacimiento),
+        ANDY_Y_SUS_SEMINARAS.ObtenerRangoEtarioID(persona_comprador.fecha_nacimiento),
+        tipoInm.id_tipo_inmueble,
+        inmueble.cantAmbientes_id,
+        ANDY_Y_SUS_SEMINARAS.ObtenerRangoM2ID(inmueble.superficie_total),
+        tipoMoneda.id_tipo_moneda,
+        -- Medidas
+        COUNT(DISTINCT v.id_venta) AS cantVentas,
+        AVG(v.precio_venta / inmueble.superficie_total) AS precioPromedioPorM2,
+        AVG(v.comision) AS promedioComision
+        FROM ANDY_Y_SUS_SEMINARAS.Venta v
+        JOIN ANDY_Y_SUS_SEMINARAS.Anuncio anuncio ON v.anuncio_id = anuncio.nro_anuncio
+        JOIN ANDY_Y_SUS_SEMINARAS.Agente ag ON ag.id_agente = anuncio.agente_id
+        JOIN ANDY_Y_SUS_SEMINARAS.Sucursal s ON s.codigo_sucursal = ag.sucursal_id
+        JOIN ANDY_Y_SUS_SEMINARAS.TipoDeMoneda tm ON anuncio.moneda_id = tm.id_moneda
+        JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_moneda tipoMoneda ON tm.nombre = tipoMoneda.nombre
+        JOIN ANDY_Y_SUS_SEMINARAS.Persona persona_agente ON ag.persona_id = persona_agente.id_persona
+        JOIN ANDY_Y_SUS_SEMINARAS.Comprador comprador ON v.comprador_id = comprador.id_comprador
+        JOIN ANDY_Y_SUS_SEMINARAS.Persona persona_comprador ON comprador.persona_id = persona_comprador.id_persona
+        JOIN ANDY_Y_SUS_SEMINARAS.Inmueble inmueble ON anuncio.inmueble_id = inmueble.nro_inmueble
+        JOIN ANDY_Y_SUS_SEMINARAS.TipoDeInmueble ti ON inmueble.tipo_de_inmueble_id = ti.id_tipo_de_inmueble
+        JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_inmueble tipoInm ON ti.id_tipo_de_inmueble = tipoInm.id_tipo_inmueble
+        JOIN ANDY_Y_SUS_SEMINARAS.Direccion direccion ON inmueble.direccion_id = direccion.id_direccion
+        JOIN ANDY_Y_SUS_SEMINARAS.Barrio barrio ON direccion.barrio_id = barrio.id_barrio
+        JOIN ANDY_Y_SUS_SEMINARAS.Localidad localidad ON barrio.localidad_id = localidad.id_localidad
+        JOIN ANDY_Y_SUS_SEMINARAS.Provincia provincia ON localidad.provincia_id = provincia.id_provincia
+        JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_ubicacion u ON provincia.nombre = u.provincia AND localidad.nombre = u.localidad AND barrio.nombre = u.barrio
+        JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo t ON YEAR(v.fecha_venta) = t.anio AND MONTH(v.fecha_venta) = t.mes
+        WHERE v.fecha_venta IS NOT NULL
+        GROUP BY
+        t.id_tiempo,
+        u.id_ubicacion,
+        s.codigo_sucursal,
+        ANDY_Y_SUS_SEMINARAS.ObtenerRangoEtarioID(persona_agente.fecha_nacimiento),
+        ANDY_Y_SUS_SEMINARAS.ObtenerRangoEtarioID(persona_comprador.fecha_nacimiento),
+        tipoInm.id_tipo_inmueble,
+        inmueble.cantAmbientes_id,
+        ANDY_Y_SUS_SEMINARAS.ObtenerRangoM2ID(inmueble.superficie_total),
+        tipoMoneda.id_tipo_moneda
+END
+GO
 
 
+EXEC ANDY_Y_SUS_SEMINARAS.BI_MigracionHechoAnuncio;
+EXEC ANDY_Y_SUS_SEMINARAS.BI_MigracionHechoAlquiler;
+EXEC ANDY_Y_SUS_SEMINARAS.BI_MigracionHechoVenta;
+go
+
+--1. Duración promedio (en días) que se encuentran publicados los anuncios
+-- según el tipo de operación (alquiler, venta, etc), barrio y ambientes para cada
+-- cuatrimestre de cada año. Se consideran todos los anuncios que se dieron de alta
+-- en ese cuatrimestre. La duración se calcula teniendo en cuenta la fecha de alta y
+-- la fecha de finalización.
+
+CREATE VIEW ANDY_Y_SUS_SEMINARAS.VistaDuracionPromedioAnuncios
+AS
+SELECT 
+    t.anio,
+    t.cuatrimestre,
+    u.barrio,
+    ambientes.ambientes,
+    tipoOp.nombre AS tipoOperacion,
+    AVG(a.promedio_tiempo_publicado * a.cant_anuncios) AS duracionPromedio
+FROM
+    ANDY_Y_SUS_SEMINARAS.BI_hecho_anuncio a
+    JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo t ON a.tiempo = t.id_tiempo
+    JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_ubicacion u ON a.ubicacion = u.id_ubicacion
+    JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_operacion tipoOp ON a.tipo_operacion = tipoOp.id_tipo_operacion
+    JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_ambientes ambientes ON a.ambientes = ambientes.id_ambientes
+GROUP BY
+    t.anio,
+    t.cuatrimestre,
+    u.barrio,
+    ambientes.ambientes,
+    tipoOp.nombre
+GO
+
+SELECT * FROM ANDY_Y_SUS_SEMINARAS.VistaDuracionPromedioAnuncios
+
+-- 2. Precio promedio de los anuncios de inmuebles según el tipo de operación
+-- (alquiler, venta, etc), tipo de inmueble y rango m2 para cada cuatrimestre/año.
+-- Se consideran todos los anuncios que se dieron de alta en ese cuatrimestre. El
+-- precio se debe expresar en el tipo de moneda que corresponda, identificando de
+-- cuál se trata.
+go
+CREATE VIEW ANDY_Y_SUS_SEMINARAS.VistaPrecioPromedioAnuncios
+AS
+SELECT 
+    t.anio,
+    t.cuatrimestre,
+    tipoOp.nombre AS tipoOperacion,
+    tipoInm.nombre AS tipoInmueble,
+    rangoM2.rango_inicio,
+    rangoM2.rango_fin,
+    tipoMoneda.nombre AS tipoMoneda,
+    AVG(a.precio_promedio * a.cant_anuncios) AS precioPromedio
+FROM
+    ANDY_Y_SUS_SEMINARAS.BI_hecho_anuncio a
+    JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo t ON a.tiempo = t.id_tiempo
+    JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_operacion tipoOp ON a.tipo_operacion = tipoOp.id_tipo_operacion
+    JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_inmueble tipoInm ON a.tipo_inmueble = tipoInm.id_tipo_inmueble
+    JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_rango_m2 rangoM2 ON a.rango_m2 = rangoM2.id_rango_m2
+    JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tipo_moneda tipoMoneda ON a.tipo_moneda = tipoMoneda.id_tipo_moneda
+GROUP BY
+    t.anio,
+    t.cuatrimestre,
+    tipoOp.nombre,
+    tipoInm.nombre,
+    rangoM2.rango_inicio,
+    rangoM2.rango_fin,
+    tipoMoneda.nombre
+GO
+-- 3. Los 5 barrios más elegidos para alquilar en función del rango etario de los
+-- inquilinos para cada cuatrimestre/año. Se calcula en función de los alquileres
+-- dados de alta en dicho periodo.
+
+CREATE VIEW ANDY_Y_SUS_SEMINARAS.VistaBarriosMasElegidosAlquilar
+AS
+SELECT TOP (5)
+    t.anio,
+    t.cuatrimestre,
+    rangoEtario.rango_inicio,
+    rangoEtario.rango_fin,
+    u.barrio,
+    COUNT(*) AS cantAlquileres
+FROM
+    ANDY_Y_SUS_SEMINARAS.BI_hecho_alquiler a
+    JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo t ON a.tiempo = t.id_tiempo
+    JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_rango_etario rangoEtario ON a.rango_etario_inquilinos = rangoEtario.id_rango_etario
+    JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_ubicacion u ON a.ubicacion = u.id_ubicacion
+GROUP BY
+    t.anio,
+    t.cuatrimestre,
+    rangoEtario.rango_inicio,
+    rangoEtario.rango_fin,
+    u.barrio
+ORDER BY
+    cantAlquileres DESC
+GO
+-- 4. Porcentaje de incumplimiento de pagos de alquileres en término por cada
+-- mes/año. Se calcula en función de las fechas de pago y fecha de vencimiento del
+-- mismo. El porcentaje es en función del total de pagos en dicho periodo.
+
+CREATE VIEW ANDY_Y_SUS_SEMINARAS.VistaPorcentajeIncumplimientoPagos
+AS
+SELECT 
+    t.anio as anio,
+    t.cuatrimestre as cuatrimestre,
+    t.mes as mes,
+    AVG(a.porcentajeIncumplimientoPagos * a.cantPagos) as porcentajeIncumplimientoPagos
+FROM
+    ANDY_Y_SUS_SEMINARAS.BI_hecho_alquiler a
+    JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo t ON a.tiempo = t.id_tiempo
+GROUP BY
+    t.anio,
+    t.cuatrimestre,
+    t.mes
+GO
+
+-- 5. Porcentaje promedio de incremento del valor de los alquileres para los
+-- contratos en curso por mes/año. Se calcula tomando en cuenta el último pago
+-- con respecto al del mes en curso, únicamente de aquellos alquileres que hayan
+-- tenido aumento y están activos.
+
+CREATE VIEW ANDY_Y_SUS_SEMINARAS.VistaPorcentajePromedioIncrementoAlquileres
+AS
 
 
-
-
-
-Duración promedio (en días) que se encuentran publicados los anuncios
-según el tipo de operación (alquiler, venta, etc), barrio y ambientes para cada
-cuatrimestre de cada año. Se consideran todos los anuncios que se dieron de alta
-12
-en ese cuatrimestre. La duración se calcula teniendo en cuenta la fecha de alta y
-la fecha de finalización.
-2. Precio promedio de los anuncios de inmuebles según el tipo de operación
-(alquiler, venta, etc), tipo de inmueble y rango m2 para cada cuatrimestre/año.
-Se consideran todos los anuncios que se dieron de alta en ese cuatrimestre. El
-precio se debe expresar en el tipo de moneda que corresponda, identificando de
-cuál se trata.
-3. Los 5 barrios más elegidos para alquilar en función del rango etario de los
-inquilinos para cada cuatrimestre/año. Se calcula en función de los alquileres
-dados de alta en dicho periodo.
-4. Porcentaje de incumplimiento de pagos de alquileres en término por cada
-mes/año. Se calcula en función de las fechas de pago y fecha de vencimiento del
-mismo. El porcentaje es en función del total de pagos en dicho periodo.
-5. Porcentaje promedio de incremento del valor de los alquileres para los
-contratos en curso por mes/año. Se calcula tomando en cuenta el último pago
-con respecto al del mes en curso, únicamente de aquellos alquileres que hayan
-tenido aumento y están activos.
-6. Precio promedio de m2 de la venta de inmuebles según el tipo de inmueble y
-la localidad para cada cuatrimestre/año. Se calcula en función de las ventas
-concretadas.
-7. Valor promedio de la comisión según el tipo de operación (alquiler, venta, etc)
-y sucursal para cada cuatrimestre/año. Se calcula en función de los alquileres y
-ventas concretadas dentro del periodo.
-8. Porcentaje de operaciones concretadas (tanto de alquileres como ventas) por
-cada sucursal, según el rango etario de los empleados por año en función de la
-cantidad de anuncios publicados en ese mismo año.
-9. Monto total de cierre de contratos por tipo de operación (tanto de alquileres
-como ventas) por cada cuatrimestre y sucursal, diferenciando el tipo de moneda.
+-- 6. Precio promedio de m2 de la venta de inmuebles según el tipo de inmueble y
+-- la localidad para cada cuatrimestre/año. Se calcula en función de las ventas
+-- concretadas.
+-- 7. Valor promedio de la comisión según el tipo de operación (alquiler, venta, etc)
+-- y sucursal para cada cuatrimestre/año. Se calcula en función de los alquileres y
+-- ventas concretadas dentro del periodo.
+-- 8. Porcentaje de operaciones concretadas (tanto de alquileres como ventas) por
+-- cada sucursal, según el rango etario de los empleados por año en función de la
+-- cantidad de anuncios publicados en ese mismo año.
+-- 9. Monto total de cierre de contratos por tipo de operación (tanto de alquileres
+-- como ventas) por cada cuatrimestre y sucursal, diferenciando el tipo de moneda.
