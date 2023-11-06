@@ -413,8 +413,8 @@ BEGIN
         -- Medidas
         COUNT(DISTINCT a.id_alquiler) AS cantAlquileres,
         SUM(CASE WHEN (DATEDIFF(DAY, pa.fecha_pago, pa.fecha_vencimiento) > 0) THEN 1 ELSE 0 END) / COUNT(*) * 100 AS porcentajeIncumplimientoPagos,
-        AVG(a.comision) AS promedioComision
-        COUNT(*) AS cantPagos,
+        AVG(a.comision) AS promedioComision,
+        COUNT(*) AS cantPagos
         --todo porcentaje de aumento
         FROM ANDY_Y_SUS_SEMINARAS.Alquiler a
         JOIN ANDY_Y_SUS_SEMINARAS.Anuncio anuncio ON a.anuncio_id = anuncio.nro_anuncio
@@ -625,8 +625,8 @@ GO
 -- con respecto al del mes en curso, únicamente de aquellos alquileres que hayan
 -- tenido aumento y están activos.
 
-CREATE VIEW ANDY_Y_SUS_SEMINARAS.VistaPorcentajePromedioIncrementoAlquileres
-AS
+-- CREATE VIEW ANDY_Y_SUS_SEMINARAS.VistaPorcentajePromedioIncrementoAlquileres
+-- AS
 
 
 -- 6. Precio promedio de m2 de la venta de inmuebles según el tipo de inmueble y
