@@ -124,38 +124,50 @@ entity BI_HechoVenta {
 
 }
 
-BI_DimTiempo }o--|| BI_HechoAnuncio
-BI_DimTiempo }o--|| BI_HechoAlquiler
-BI_DimTiempo }o--|| BI_HechoVenta
+entity BI_HechoPagoAlquiler {
+    tiempo FK PK
+    promedioAumento numeric
+    cantPagos numeric
+}
 
-BI_DimUbicacion }o--|| BI_HechoAnuncio
-BI_DimUbicacion }o--|| BI_HechoAlquiler
-BI_DimUbicacion }o--|| BI_HechoVenta
 
-BI_DimSucursal }o--|| BI_HechoAnuncio
-BI_DimSucursal }o--|| BI_HechoAlquiler
-BI_DimSucursal }o--|| BI_HechoVenta
+BI_HechoPagoAlquiler ||--o{ BI_DimTiempo
 
-BI_DimRangoEtario }o--|| BI_HechoAnuncio
-BI_DimRangoEtario }o--|| BI_HechoAlquiler
-BI_DimRangoEtario }o--|| BI_HechoVenta
+BI_DimTiempo ||--o{ BI_HechoAnuncio
+BI_DimTiempo ||--o{ BI_HechoAlquiler
+BI_DimTiempo ||--o{ BI_HechoVenta
 
-BI_DimTipoInmueble }o--|| BI_HechoAnuncio
-BI_DimTipoInmueble }o--|| BI_HechoAlquiler
-BI_DimTipoInmueble }o--|| BI_HechoVenta
+BI_DimUbicacion ||--o{ BI_HechoAnuncio
+BI_DimUbicacion ||--o{ BI_HechoAlquiler
+BI_DimUbicacion ||--o{ BI_HechoVenta
 
-BI_DimAmbientes }o--|| BI_HechoAnuncio
-BI_DimAmbientes }o--|| BI_HechoAlquiler
-BI_DimAmbientes }o--|| BI_HechoVenta
+BI_DimSucursal ||--o{ BI_HechoAnuncio
+BI_DimSucursal ||--o{ BI_HechoAlquiler
+BI_DimSucursal ||--o{ BI_HechoVenta
 
-BI_DimRangoM2 }o--|| BI_HechoAnuncio
-BI_DimRangoM2 }o--|| BI_HechoAlquiler
-BI_DimRangoM2 }o--|| BI_HechoVenta
+BI_DimRangoEtario ||--o{ BI_HechoAnuncio
+BI_DimRangoEtario ||--o{ BI_HechoAlquiler
+BI_DimRangoEtario ||--o{ BI_HechoVenta
 
-BI_DimTipoOperacion }o--|| BI_HechoAnuncio
 
-BI_DimTipoMoneda }o--|| BI_HechoAnuncio
-BI_DimTipoMoneda }o--|| BI_HechoAlquiler
-BI_DimTipoMoneda }o--|| BI_HechoVenta
+BI_HechoAnuncio ||--o{ BI_DimTipoInmueble
+BI_HechoAlquiler ||--o{ BI_DimTipoInmueble
+BI_HechoVenta ||--o{ BI_DimTipoInmueble
+
+
+BI_HechoAnuncio ||--o{ BI_DimAmbientes
+BI_HechoAlquiler ||--o{ BI_DimAmbientes
+BI_HechoVenta ||--o{ BI_DimAmbientes
+
+BI_HechoAnuncio ||--o{ BI_DimRangoM2
+BI_HechoAlquiler ||--o{ BI_DimRangoM2
+BI_HechoVenta ||--o{ BI_DimRangoM2
+
+BI_HechoAnuncio ||--o{ BI_DimTipoMoneda
+BI_HechoAlquiler ||--o{ BI_DimTipoMoneda
+BI_HechoVenta ||--o{ BI_DimTipoMoneda
+
+BI_DimTipoOperacion ||-o{ BI_HechoAnuncio
+
 
 @enduml

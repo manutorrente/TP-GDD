@@ -234,7 +234,7 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.Alquiler
     id_alquiler INT PRIMARY KEY,
     anuncio_id INT,
     inquilino_id INT,
-    duracion_id INT,
+    cant_periodos INT,
     fecha_inicio DATETIME,
     fecha_fin DATETIME,
     deposito NUMERIC(18, 2),
@@ -693,8 +693,6 @@ BEGIN
     AND DETALLE_ALQ_NRO_PERIODO_FIN IS NOT NULL
 END
 GO
-
-
 
 
 CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_pago_alquiler

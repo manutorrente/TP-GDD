@@ -92,9 +92,7 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.BI_hecho_alquiler (
     tipo_moneda numeric, 
     cant_alquileres numeric,
     porcentaje_incumplimiento_pagos numeric,
-    promedio_comision numeric,
     cantPagos numeric,
-    promedioPorcentajeAumento numeric,
     FOREIGN KEY (tiempo) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo(id_tiempo),
     FOREIGN KEY (ubicacion) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_ubicacion(id_ubicacion),
     FOREIGN KEY (sucursal) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_sucursal(codigo_sucursal),
@@ -120,7 +118,6 @@ CREATE TABLE ANDY_Y_SUS_SEMINARAS.BI_hecho_venta (
     tipo_moneda numeric, 
     cant_ventas numeric,
     precio_promedio_por_m2 numeric,
-    promedio_comision numeric,
     FOREIGN KEY (tiempo) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo(id_tiempo),
     FOREIGN KEY (ubicacion) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_ubicacion(id_ubicacion),
     FOREIGN KEY (sucursal) REFERENCES ANDY_Y_SUS_SEMINARAS.BI_dim_sucursal(codigo_sucursal),
@@ -483,25 +480,28 @@ BEGIN
 END
 GO
 
--- CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.BI_MigracionHechoPagoAlquiler
--- AS
--- BEGIN
---     INSERT INTO ANDY_Y_SUS_SEMINARAS.BI_hecho_pago_alquiler (tiempo, promedio_aumento, cant_pagos)
---     SELECT DISTINCT
---         ANDY_Y_SUS_SEMINARAS.ObtenerTiempoID(pa.fecha_pago),
---         SUM(CASE WHEN ea.nombre = 'Activo' THEN (pa.importe - pago_anterior.importe) / pago_anterior.importe * 100 ELSE 0 END) / SUM(CASE WHEN ea.nombre = 'Activo' OR pa.importe - pago_anterior.importe > 0 THEN 1 ELSE 0 END) AS promedioPorcentajeAumento,        
---         COUNT(DISTINCT pa.id_pago_alquiler) AS cantPagos
---         --todo porcentaje de aumento
---         FROM ANDY_Y_SUS_SEMINARAS.Alquiler a
---         JOIN ANDY_Y_SUS_SEMINARAS.EstadoAlquiler ea ON a.estado_alquiler_id = ea.id_estado_alquiler
---         JOIN ANDY_Y_SUS_SEMINARAS.PagoAlquiler pa ON a.id_alquiler = pa.alquiler_id
+
+CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.BI_MigracionHechoPagoAlquiler
+AS
+BEGIN
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.BI_hecho_pago_alquiler (tiempo, promedio_aumento, cant_pagos)
+    SELECT DISTINCT
+        ANDY_Y_SUS_SEMINARAS.ObtenerTiempoID(pa.fecha_pago),
+        SUM((pa.importe - pago_anterior.importe)/pago_anterior.importe*100)/ COUNT(*) AS promedioPorcentajeAumento,
+        COUNT(*) AS cantPagos
+        --todo porcentaje de aumento
+        FROM ANDY_Y_SUS_SEMINARAS.Alquiler a
+        JOIN ANDY_Y_SUS_SEMINARAS.EstadoAlquiler ea ON a.estado_alquiler_id = ea.id_estado_alquiler --AND ea.nombre = 'Activo'
+        JOIN ANDY_Y_SUS_SEMINARAS.PagoAlquiler pa ON a.id_alquiler = pa.alquiler_id
+        JOIN ANDY_Y_SUS_SEMINARAS.PagoAlquiler pago_anterior ON pago_anterior.alquiler_id = pa.alquiler_id AND YEAR(pago_anterior.fecha_pago) * 12 + MONTH(pago_anterior.fecha_pago) = YEAR(pa.fecha_pago) * 12 + MONTH(pa.fecha_pago) - 1 AND pago_anterior.importe != pa.importe
+        WHERE pa.fecha_pago IS NOT NULL
         
         
 
---         GROUP BY
---         ANDY_Y_SUS_SEMINARAS.ObtenerTiempoID(pa.fecha_pago)
--- END
--- GO
+        GROUP BY
+        ANDY_Y_SUS_SEMINARAS.ObtenerTiempoID(pa.fecha_pago)
+END
+GO
 
 CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.BI_MigracionHechoVenta
 AS
@@ -556,7 +556,7 @@ GO
 EXEC ANDY_Y_SUS_SEMINARAS.BI_MigracionHechoAnuncio;
 EXEC ANDY_Y_SUS_SEMINARAS.BI_MigracionHechoAlquiler;
 EXEC ANDY_Y_SUS_SEMINARAS.BI_MigracionHechoVenta;
--- EXEC ANDY_Y_SUS_SEMINARAS.BI_MigracionHechoPagoAlquiler;
+EXEC ANDY_Y_SUS_SEMINARAS.BI_MigracionHechoPagoAlquiler;
 go
 
 --1. Duración promedio (en días) que se encuentran publicados los anuncios
@@ -565,6 +565,7 @@ go
 -- en ese cuatrimestre. La duración se calcula teniendo en cuenta la fecha de alta y
 -- la fecha de finalización.
 
+go
 CREATE VIEW ANDY_Y_SUS_SEMINARAS.VistaDuracionPromedioAnuncios
 AS
 SELECT 
@@ -573,7 +574,7 @@ SELECT
     u.barrio,
     ambientes.ambientes,
     tipoOp.nombre AS tipoOperacion,
-    AVG(a.promedio_tiempo_publicado * a.cant_anuncios) AS duracionPromedio
+    SUM(a.promedio_tiempo_publicado * a.cant_anuncios) / SUM(a.cant_anuncios) AS duracionPromedio
 FROM
     ANDY_Y_SUS_SEMINARAS.BI_hecho_anuncio a
     JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo t ON a.tiempo = t.id_tiempo
@@ -606,7 +607,7 @@ SELECT
     rangoM2.rango_inicio,
     rangoM2.rango_fin,
     tipoMoneda.nombre AS tipoMoneda,
-    AVG(a.precio_promedio * a.cant_anuncios) AS precioPromedio
+    SUM(a.precio_promedio * a.cant_anuncios) / SUM(a.cant_anuncios) AS precioPromedio
 FROM
     ANDY_Y_SUS_SEMINARAS.BI_hecho_anuncio a
     JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo t ON a.tiempo = t.id_tiempo
@@ -660,7 +661,7 @@ SELECT
     t.anio as anio,
     t.cuatrimestre as cuatrimestre,
     t.mes as mes,
-    AVG(a.porcentaje_incumplimiento_pagos * a.cantPagos) as porcentajeIncumplimientoPagos
+    SUM(a.porcentaje_incumplimiento_pagos * a.cantPagos) / SUM(a.cantPagos) as porcentajeIncumplimientoPagos
 FROM
     ANDY_Y_SUS_SEMINARAS.BI_hecho_alquiler a
     JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo t ON a.tiempo = t.id_tiempo
@@ -681,16 +682,15 @@ SELECT
     t.anio,
     t.cuatrimestre,
     t.mes,
-    AVG(a.promedioPorcentajeAumento * a.cant_alquileres) AS porcentajePromedioIncrementoAlquileres
+    SUM(a.promedio_aumento * a.cant_pagos) / SUM(a.cant_pagos) AS porcentajePromedioIncrementoAlquileres
 FROM
-    ANDY_Y_SUS_SEMINARAS.BI_hecho_alquiler a
+    ANDY_Y_SUS_SEMINARAS.BI_hecho_pago_alquiler a
     JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo t ON a.tiempo = t.id_tiempo
 GROUP BY
     t.anio,
     t.cuatrimestre,
     t.mes
 GO
-
 
 
 -- 6. Precio promedio de m2 de la venta de inmuebles según el tipo de inmueble y
@@ -706,7 +706,7 @@ SELECT
     tipoInm.nombre AS tipoInmueble,
     u.localidad,
     m.nombre,
-    AVG(a.precio_promedio_por_m2 * a.cant_ventas) AS precioPromedioPorM2
+    SUM(a.precio_promedio_por_m2 * a.cant_ventas)/SUM(a.cant_ventas) AS precioPromedioPorM2
 FROM
     ANDY_Y_SUS_SEMINARAS.BI_hecho_venta a
     JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo t ON a.tiempo = t.id_tiempo
@@ -732,7 +732,7 @@ SELECT
     t.cuatrimestre,
     tipoOp.nombre AS tipoOperacion,
     sucursal.nombre AS sucursal,
-    AVG(a.promedio_comision * a.cant_anuncios) AS valorPromedioComision
+    SUM(a.promedio_comision * a.cant_anuncios) / SUM(a.cant_anuncios) AS valorPromedioComision
 FROM
     ANDY_Y_SUS_SEMINARAS.BI_hecho_anuncio a
     JOIN ANDY_Y_SUS_SEMINARAS.BI_dim_tiempo t ON a.tiempo = t.id_tiempo
@@ -798,25 +798,3 @@ GROUP BY
     tipoOp.nombre,
     tipoMon.nombre
 GO
-
-
--- select * from ANDY_Y_SUS_SEMINARAS.VistaDuracionPromedioAnuncios
-
--- select * from ANDY_Y_SUS_SEMINARAS.VistaPrecioPromedioAnuncios
-
--- select * from ANDY_Y_SUS_SEMINARAS.VistaBarriosMasElegidosAlquilar
-
--- select * from ANDY_Y_SUS_SEMINARAS.VistaPorcentajeIncumplimientoPagos
-
--- select * from ANDY_Y_SUS_SEMINARAS.VistaPorcentajePromedioIncrementoAlquileres
-
--- select * from ANDY_Y_SUS_SEMINARAS.VistaPrecioPromedioM2Ventas
-
--- select * from ANDY_Y_SUS_SEMINARAS.VistaValorPromedioComision
-
--- select * from ANDY_Y_SUS_SEMINARAS.VistaPorcentajeOperacionesConcretadas
-
--- select * from ANDY_Y_SUS_SEMINARAS.BI_Vista_CierreContratos
-
-
--- select * from ANDY_Y_SUS_SEMINARAS.BI_hecho_pago_alquiler
