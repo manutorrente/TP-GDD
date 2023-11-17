@@ -656,7 +656,7 @@ GO
 CREATE PROCEDURE ANDY_Y_SUS_SEMINARAS.migrar_alquiler
 AS
 BEGIN
-    INSERT INTO ANDY_Y_SUS_SEMINARAS.Alquiler (id_alquiler, fecha_inicio, fecha_fin, inquilino_id, estado_alquiler_id, duracion_id, deposito, comision, gastos_averiguaciones, anuncio_id)
+    INSERT INTO ANDY_Y_SUS_SEMINARAS.Alquiler (id_alquiler, fecha_inicio, fecha_fin, inquilino_id, estado_alquiler_id, cant_periodos, deposito, comision, gastos_averiguaciones, anuncio_id)
     SELECT DISTINCT
         em.ALQUILER_CODIGO,
         em.ALQUILER_FECHA_INICIO,

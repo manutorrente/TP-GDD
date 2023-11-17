@@ -1,4 +1,5 @@
 USE GD2C2023;
+go
 
 -- Eliminar vistas
 DROP VIEW ANDY_Y_SUS_SEMINARAS.VistaPrecioPromedioAnuncios;
